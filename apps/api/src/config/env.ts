@@ -16,14 +16,21 @@ const EnvSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
 });
 
-const parsed = EnvSchema.safeParse(process.env);
+export type Env = z.infer<typeof EnvSchema>;
 
-if (!parsed.success) {
-  console.error(
-    "Invalid environment configuration:\n" + z.prettifyError(parsed.error),
-  );
-  process.exit(1);
+/**
+ * Parse + validate an environment source. Pure and testable: throws on invalid
+ * input rather than exiting, so unit tests can assert failures. The module-level
+ * `env` below calls it once against process.env at startup.
+ */
+export function parseEnv(source: NodeJS.ProcessEnv = process.env): Readonly<Env> {
+  const parsed = EnvSchema.safeParse(source);
+  if (!parsed.success) {
+    throw new Error(
+      "Invalid environment configuration:\n" + z.prettifyError(parsed.error),
+    );
+  }
+  return Object.freeze(parsed.data);
 }
 
-export const env = Object.freeze(parsed.data);
-export type Env = typeof env;
+export const env = parseEnv();
