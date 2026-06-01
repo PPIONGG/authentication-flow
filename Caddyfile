@@ -1,0 +1,18 @@
+{
+	# In a container Caddy cannot install its root CA into a host trust store.
+	skip_install_trust
+}
+
+localhost {
+	tls internal
+
+	route {
+		# API first — never let the SPA proxy catch /api/*.
+		# Backend already expects the /api prefix, so do NOT strip it.
+		reverse_proxy /api/* api:3000
+
+		# Everything else -> Vite dev server (serves index.html + HMR ws).
+		# Caddy upgrades the websocket transparently; no special flag needed.
+		reverse_proxy web:5173
+	}
+}
