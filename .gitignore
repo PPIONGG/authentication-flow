@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+
+# env
+.env
+
+# build output
+dist/
+apps/api/dist/
+apps/web/dist/
+
+# prisma generated client (regenerated in build / locally)
+apps/api/src/generated/
+
+# logs / os
+*.log
+.DS_Store
+
+# caddy local CA data (mounted volume)
+caddy_data/
+caddy_config/
