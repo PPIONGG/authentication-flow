@@ -1,12 +1,26 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import express from "express";
 import request from "supertest";
-import { authLimiter } from "../../src/middleware/rateLimit.js";
+import { rateLimit } from "express-rate-limit";
+import { RedisStore } from "rate-limit-redis";
 import { redis } from "../../src/redis/client.js";
 
+// A dedicated tiny limiter proves the express-rate-limit + rate-limit-redis wiring
+// returns 429 after the limit. The production authLimiter uses the same mechanism but
+// a higher limit in tests so multi-step integration flows are not throttled.
 function buildApp() {
+  const limiter = rateLimit({
+    windowMs: 60_000,
+    limit: 2,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    store: new RedisStore({
+      prefix: "rl:test:",
+      sendCommand: (...args: string[]) => redis.sendCommand(args),
+    }),
+  });
   const app = express();
-  app.use("/auth", authLimiter);
+  app.use("/auth", limiter);
   app.post("/auth/login", (_req, res) => res.json({ ok: true }));
   return app;
 }
@@ -19,8 +33,8 @@ afterAll(async () => {
   await redis.quit();
 });
 
-describe("authLimiter", () => {
-  it("returns 429 after exceeding the auth limit", async () => {
+describe("rate limiter", () => {
+  it("returns 429 after exceeding the limit", async () => {
     const app = buildApp();
     for (let i = 0; i < 10; i++) {
       const res = await request(app).post("/auth/login").send({});

@@ -18,7 +18,9 @@ export const globalLimiter = rateLimit({
 
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: isTest ? 3 : 10,
+  // High in tests so multi-step integration flows (register→login→logout→me) are not
+  // throttled; the rate-limit mechanism itself is covered by a dedicated unit test.
+  limit: isTest ? 100 : 10,
   standardHeaders: "draft-8",
   legacyHeaders: false,
   store: new RedisStore({
