@@ -1,43 +1,42 @@
+// apps/api/src/app.ts  (Plan 00 created the skeleton; Plan 01 MODIFIES it)
 import express from "express";
-import helmet from "helmet";
-import cors from "cors";
 import cookieParser from "cookie-parser";
-import { env } from "./config/env.js";
+import { securityMiddleware } from "./middleware/security.js";
+import { sessionMiddleware } from "./middleware/session.js";
+import { csrfProtection, issueCsrfToken } from "./middleware/csrf.js";
+import { globalLimiter, authLimiter } from "./middleware/rateLimit.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { authRouter } from "./modules/auth/auth.routes.js";
 
 export const app = express();
 
-// Behind Caddy (reverse proxy): trust the proxy so Secure cookies are emitted.
+// Behind Caddy (TLS terminator) so Secure cookies + correct req.ip work.
 app.set("trust proxy", 1);
 
-// --- Security headers (helmet: CSP + HSTS) ---
-app.use(helmet());
-
-// --- CORS locked to the single origin, credentials enabled ---
-app.use(
-  cors({
-    origin: env.APP_URL,
-    credentials: true,
-  }),
-);
-
-// --- Body + cookie parsing (cookie-parser must precede csrf in later plans) ---
+app.use(securityMiddleware);
 app.use(express.json());
 app.use(cookieParser());
+app.use(sessionMiddleware);
+app.use(globalLimiter);
 
-// === API routes are mounted under /api ===
-const api = express.Router();
-
-// Public health check (no auth) — Plan 00.
-api.get("/health", (_req, res) => {
+// Public, no auth, no csrf.
+app.get("/api/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-// Future routers mounted here in later plans:
-//   api.use("/auth", authRoutes)
-//   api.use("/account", accountRoutes)
-//   api.use("/admin", adminRoutes)
-//   api.get("/csrf", ...)
+// Issue/return the CSRF token BEFORE csrf protection so the SPA can bootstrap.
+// Modifying the session forces a stable __Host-sid cookie (saveUninitialized:false
+// won't send a cookie for an untouched session); csrf binds the token to req.session.id.
+app.get("/api/csrf", (req, res) => {
+  req.session.bootstrappedAt = Date.now();
+  res.status(200).json({ csrfToken: issueCsrfToken(req, res) });
+});
 
-app.use("/api", api);
+// All mutating routes below are CSRF-protected.
+app.use(csrfProtection);
 
-// Central error handler is added in a later plan (errorHandler.ts).
+// Tighter rate limit on auth endpoints.
+app.use("/api/auth", authLimiter, authRouter);
+
+// Central error handler LAST.
+app.use(errorHandler);
