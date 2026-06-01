@@ -19,3 +19,9 @@ apps/api/src/generated/
 # caddy local CA data (mounted volume)
 caddy_data/
 caddy_config/
+
+# typescript build cache
+*.tsbuildinfo
+
+# local agent / editor settings
+.claude/
