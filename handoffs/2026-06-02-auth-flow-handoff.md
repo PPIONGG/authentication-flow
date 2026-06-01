@@ -5,7 +5,7 @@
 This project is a self-hosted, full-stack auth reference (learning project). It is built by
 executing a set of reviewed-and-verified plans task-by-task with TDD and frequent commits.
 
-- **Repo:** https://github.com/PPIONGG/authentication-flow (`main`, ~38 commits, in sync)
+- **Repo:** https://github.com/PPIONGG/authentication-flow (`main`, ~39 commits, in sync)
 - **Stack:** Vite+React+TS SPA · Express 5+TS API · Postgres+Prisma 7 · Redis sessions · Caddy
   (single origin, `tls internal`) · Mailpit · argon2id · Docker Compose. Server-side **opaque
   sessions in `__Host-sid` httpOnly cookies (NOT JWT)**.
@@ -30,7 +30,13 @@ executing a set of reviewed-and-verified plans task-by-task with TDD and frequen
 ## Remaining work (in order)
 1. **Plan 01 web side — Tasks 24+** (NOT STARTED): `apps/web` apiClient (object form per CONTRACTS),
    `useMe/useLogin/useRegister/useLogout`, `LoginPage`/`RegisterPage`/`Dashboard`, `ProtectedRoute`,
-   router wiring, and RTL+MSW tests. Resume by opening the Plan 01 file at **Task 24**.
+   router wiring, and RTL+MSW tests. Resume by opening
+   `docs/superpowers/plans/2026-06-01-01-core-auth-sessions.md` at **Task 24** (≈ line 2175).
+   ⛔ **FIRST install the web deps the web tasks need but `apps/web/package.json` is missing**
+   (the Plan lists them only in its prose Tech-Stack line — there is NO install step in the web
+   tasks): `npm --prefix apps/web install react-hook-form @hookform/resolvers zod` and
+   `npm --prefix apps/web install -D msw`. Skip this and the first web test dies with
+   module-not-found. (`npm outdated` will NOT surface absent packages.)
 2. **Plan 02** — email verification + password reset (Mailpit, tokens; gates login on verified email).
 3. **Plan 03** — account mgmt (change pw/email, logout-all).
 4. **Plan 04** — RBAC + admin routes + audit viewer.
@@ -74,9 +80,15 @@ cp .env.example .env                 # local env (gitignored); placeholder secre
 docker compose up -d                 # 6 services; wait until `docker compose ps` shows healthy
 curl -k https://localhost/api/health # {"status":"ok"}
 docker compose exec api npm test     # 47 API tests, all green
-# web tests (host ok, jsdom): npm --prefix apps/web test   (once Plan 01 web exists)
+# web tests run on the HOST (jsdom, no DB/Redis): npm --prefix apps/web test  (once web exists)
 ```
-Env note: `gh` CLI is NOT installed on this machine; use plain `git` (GitHub creds are cached).
+Notes:
+- **API tests run in the container; web tests run on the host** (jsdom + MSW, no DB/Redis needed).
+- The **root `.env`** (read by compose via `env_file`) is authoritative. The untracked
+  `apps/api/.env` is only a local convenience for host-run tooling (e.g. `prisma generate`) and
+  can be ignored — both hold the same dev values.
+- **Git convention:** commit straight to `main` and `git push origin main` (no feature-branch
+  convention in this repo). `gh` CLI is NOT installed; plain `git` works (GitHub creds are cached).
 
 ## Suggested skills for the next session
 - **superpowers:executing-plans** — to continue Plan 01 web (Task 24+) and Plans 02-05 task-by-task.
