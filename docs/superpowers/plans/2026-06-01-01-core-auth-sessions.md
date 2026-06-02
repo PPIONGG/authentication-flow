@@ -15,6 +15,7 @@
 This plan assumes Plan 00 already created the full `prisma/schema.prisma`, the initial migration, `apps/api/package.json`, `tsconfig.json`, `apps/api/Dockerfile`, `apps/web/package.json`, and the Docker/Caddy infra. We BUILD ON that — no new Prisma migrations are added here.
 
 **API files (`apps/api/`):**
+
 - `src/config/env.ts` — zod-validated `process.env`. **Owned by Plan 00 — this plan imports `env`, it does NOT create this file.**
 - `src/db/prisma.ts` — PrismaClient singleton (driver-adapter). **Owned by Plan 00 — this plan imports `prisma`, it does NOT create this file.**
 - `src/redis/client.ts` — connected node-redis singleton. **Owned by Plan 00 — this plan imports `redis`, it does NOT create this file.**
@@ -35,11 +36,13 @@ This plan assumes Plan 00 already created the full `prisma/schema.prisma`, the i
 - `src/server.ts` — http bootstrap (`app.listen`). **Owned by Plan 00 — this plan does NOT create or modify this file.**
 
 **API tests (`apps/api/tests/`):**
+
 - `tests/helpers/db.ts` — truncate + redis flush + mailpit clear.
 - `tests/helpers/agent.ts` — supertest agent + CSRF priming helper.
 - `tests/auth/register.test.ts`, `login.test.ts`, `logout.test.ts`, `me.test.ts`, `enumeration.test.ts`.
 
 **Web files (`apps/web/`):**
+
 - `src/lib/apiClient.ts` — fetch wrapper (`credentials:"include"` + CSRF header).
 - `src/lib/queryClient.ts` — TanStack Query client.
 - `src/features/auth/useMe.ts`, `useLogin.ts`, `useRegister.ts`, `useLogout.ts`.
@@ -49,6 +52,7 @@ This plan assumes Plan 00 already created the full `prisma/schema.prisma`, the i
 - `src/App.tsx`, `src/main.tsx`.
 
 **Web tests (`apps/web/tests/`):**
+
 - `tests/setup.ts` — RTL/jest-dom + MSW server lifecycle.
 - `tests/mocks/server.ts`, `tests/mocks/handlers.ts` — MSW.
 - `tests/LoginPage.test.tsx`, `tests/ProtectedRoute.test.tsx`.
@@ -60,6 +64,7 @@ This plan assumes Plan 00 already created the full `prisma/schema.prisma`, the i
 > **Plan 00 owns `apps/api/src/config/env.ts`** and exports the zod-validated `env` (on failure it logs + `process.exit(1)`). This plan does **NOT** create or modify that file — it only imports `env` everywhere below. This task is a verification gate that the contract export exists and validates correctly.
 
 **Files:**
+
 - Import only: `apps/api/src/config/env.ts` (created by Plan 00)
 - Test: `apps/api/tests/config/env.test.ts`
 
@@ -147,6 +152,7 @@ git commit -m "test: verify Plan 00 zod-validated env config contract"
 > **Plan 00 owns `apps/api/src/redis/client.ts`** and exports the canonical `redis` client plus `connectRedis()` / `disconnectRedis()`. This plan does **NOT** create or modify that file — it only imports `redis`. This task is a verification gate.
 
 **Files:**
+
 - Import only: `apps/api/src/redis/client.ts` (created by Plan 00)
 - Test: `apps/api/tests/redis/client.test.ts`
 
@@ -216,6 +222,7 @@ git commit -m "test: verify Plan 00 redis client singleton contract"
 > **Plan 00 owns `apps/api/src/db/prisma.ts`** and exports the `prisma` PrismaClient singleton (driver-adapter). This plan does **NOT** create or modify that file — it only imports `prisma`. This task is a verification gate.
 
 **Files:**
+
 - Import only: `apps/api/src/db/prisma.ts` (created by Plan 00)
 - Test: `apps/api/tests/db/prisma.test.ts`
 
@@ -270,6 +277,7 @@ git commit -m "test: verify Plan 00 prisma client singleton contract"
 ## Task 4: Password hashing (argon2id)
 
 **Files:**
+
 - Create: `apps/api/src/lib/password.ts`
 - Test: `apps/api/tests/lib/password.test.ts`
 
@@ -343,6 +351,7 @@ git commit -m "feat: add argon2id password hashing helpers"
 ## Task 5: Audit log helper
 
 **Files:**
+
 - Create: `apps/api/src/lib/audit.ts`
 - Test: `apps/api/tests/lib/audit.test.ts`
 
@@ -437,6 +446,7 @@ git commit -m "feat: add audit log helper"
 ## Task 6: Per-user session store (Redis set)
 
 **Files:**
+
 - Create: `apps/api/src/lib/sessionStore.ts`
 - Test: `apps/api/tests/lib/sessionStore.test.ts`
 
@@ -546,6 +556,7 @@ git commit -m "feat: add per-user redis session set helper"
 ## Task 7: Session type augmentation
 
 **Files:**
+
 - Create: `apps/api/src/types/session.d.ts`
 
 This makes `req.session.userId` and `req.session.role` type-safe across the codebase. Session data per FOUNDATION is `{ userId, role }`.
@@ -582,6 +593,7 @@ git commit -m "chore: augment express-session SessionData with userId and role"
 ## Task 8: Session middleware (express-session + connect-redis)
 
 **Files:**
+
 - Create: `apps/api/src/middleware/session.ts`
 - Test: `apps/api/tests/middleware/session.test.ts`
 
@@ -692,6 +704,7 @@ git commit -m "feat: add express-session + connect-redis session middleware"
 ## Task 9: CSRF middleware (csrf-csrf double-submit)
 
 **Files:**
+
 - Create: `apps/api/src/middleware/csrf.ts`
 - Test: `apps/api/tests/middleware/csrf.test.ts`
 
@@ -802,6 +815,7 @@ git commit -m "feat: add csrf-csrf double-submit middleware"
 ## Task 10: Security middleware (helmet + cors)
 
 **Files:**
+
 - Create: `apps/api/src/middleware/security.ts`
 - Test: `apps/api/tests/middleware/security.test.ts`
 
@@ -899,6 +913,7 @@ git commit -m "feat: add helmet + cors security middleware"
 ## Task 11: Rate-limit middleware (express-rate-limit + rate-limit-redis)
 
 **Files:**
+
 - Create: `apps/api/src/middleware/rateLimit.ts`
 - Test: `apps/api/tests/middleware/rateLimit.test.ts`
 
@@ -1002,6 +1017,7 @@ git commit -m "feat: add redis-backed global and auth rate limiters"
 ## Task 12: requireAuth middleware
 
 **Files:**
+
 - Create: `apps/api/src/middleware/requireAuth.ts`
 - Test: `apps/api/tests/middleware/requireAuth.test.ts`
 
@@ -1073,6 +1089,7 @@ git commit -m "feat: add requireAuth middleware"
 ## Task 13: errorHandler middleware
 
 **Files:**
+
 - Create: `apps/api/src/middleware/errorHandler.ts`
 - Test: `apps/api/tests/middleware/errorHandler.test.ts`
 
@@ -1174,6 +1191,7 @@ git commit -m "feat: add central errorHandler with generic responses"
 ## Task 14: Auth zod schemas
 
 **Files:**
+
 - Create: `apps/api/src/modules/auth/auth.schema.ts`
 - Test: `apps/api/tests/auth/auth.schema.test.ts`
 
@@ -1250,6 +1268,7 @@ git commit -m "feat: add auth register/login zod schemas"
 ## Task 15: Auth service (createUser + verifyCredentials)
 
 **Files:**
+
 - Create: `apps/api/src/modules/auth/auth.service.ts`
 - Test: `apps/api/tests/auth/auth.service.test.ts`
 
@@ -1385,6 +1404,7 @@ git commit -m "feat: add auth service createUser and verifyCredentials"
 ## Task 16: Auth routes (register / login / logout / me)
 
 **Files:**
+
 - Create: `apps/api/src/modules/auth/auth.routes.ts`
 - Test: deferred to the integration tests in Tasks 19–23 (routes are exercised through the full app).
 
@@ -1527,6 +1547,7 @@ git commit -m "feat: add auth routes register/login/logout/me with session + aud
 ## Task 17: Auth router unused-import cleanup
 
 **Files:**
+
 - Modify: `apps/api/src/modules/auth/auth.routes.ts`
 
 `z` is not actually used in the router; remove it to keep the code clean (DRY/YAGNI).
@@ -1565,6 +1586,7 @@ git commit -m "chore: remove unused zod import from auth routes"
 > **`apps/api/src/app.ts` is owned by Plan 00** (it creates `app` with `trust proxy`, `securityMiddleware`, `express.json()`, `cookie-parser`, and `GET /api/health`). This plan **MODIFIES** it to add session, the CSRF endpoint + protection, the global/auth limiters, the auth router, and the error handler. **`apps/api/src/server.ts` is owned by Plan 00 — do NOT create or modify it here.**
 
 **Files:**
+
 - Modify: `apps/api/src/app.ts` (created by Plan 00)
 - Test: `apps/api/tests/app.test.ts`
 
@@ -1668,6 +1690,7 @@ git commit -m "feat: assemble express app with session, csrf, limiters, auth rou
 ## Task 19: Test helpers (DB reset + supertest CSRF agent)
 
 **Files:**
+
 - Create: `apps/api/tests/helpers/db.ts`
 - Create: `apps/api/tests/helpers/agent.ts`
 
@@ -1787,6 +1810,7 @@ git commit -m "test: add db reset and csrf/signed-in supertest agent helpers"
 ## Task 20: Register integration tests
 
 **Files:**
+
 - Create: `apps/api/tests/auth/register.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -1882,6 +1906,7 @@ git commit -m "test: add register endpoint integration tests"
 ## Task 21: Login integration tests
 
 **Files:**
+
 - Create: `apps/api/tests/auth/login.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -1993,6 +2018,7 @@ git commit -m "test: add login endpoint integration tests"
 ## Task 22: Logout + /me integration tests
 
 **Files:**
+
 - Create: `apps/api/tests/auth/logout.test.ts`
 - Create: `apps/api/tests/auth/me.test.ts`
 
@@ -2101,6 +2127,7 @@ git commit -m "test: add logout and me integration tests"
 ## Task 23: Enumeration-parity test
 
 **Files:**
+
 - Create: `apps/api/tests/auth/enumeration.test.ts`
 
 Proves login responses are byte-identical whether the email exists (wrong password) or not — no enumeration leak.
@@ -2175,6 +2202,7 @@ git commit -m "test: add login enumeration-parity test"
 ## Task 24: Web — apiClient (credentials + CSRF header)
 
 **Files:**
+
 - Create: `apps/web/src/lib/apiClient.ts`
 - Test: `apps/web/tests/apiClient.test.ts`
 
@@ -2381,6 +2409,7 @@ git commit -m "feat: add web apiClient object with credentials and internal csrf
 ## Task 25: Web — queryClient
 
 **Files:**
+
 - Create: `apps/web/src/lib/queryClient.ts`
 
 - [ ] **Step 1: Write the query client**
@@ -2419,6 +2448,7 @@ git commit -m "feat: add tanstack query client with 401-safe defaults"
 ## Task 26: Web — auth hooks (useMe / useLogin / useRegister / useLogout)
 
 **Files:**
+
 - Create: `apps/web/src/features/auth/useMe.ts`
 - Create: `apps/web/src/features/auth/useLogin.ts`
 - Create: `apps/web/src/features/auth/useRegister.ts`
@@ -2586,6 +2616,7 @@ git commit -m "feat: add web auth hooks useMe/useLogin/useRegister/useLogout"
 ## Task 27: Web — LoginPage (RHF + zod)
 
 **Files:**
+
 - Create: `apps/web/src/features/auth/LoginPage.tsx`
 - Test: `apps/web/tests/LoginPage.test.tsx`
 
@@ -2771,6 +2802,7 @@ git commit -m "feat: add LoginPage with react-hook-form + zod and MSW tests"
 ## Task 28: Web — RegisterPage (RHF + zod)
 
 **Files:**
+
 - Create: `apps/web/src/features/auth/RegisterPage.tsx`
 - Test: `apps/web/tests/RegisterPage.test.tsx`
 
@@ -2919,6 +2951,7 @@ git commit -m "feat: add RegisterPage with react-hook-form + zod"
 ## Task 29: Web — Dashboard
 
 **Files:**
+
 - Create: `apps/web/src/features/dashboard/Dashboard.tsx`
 
 Shows the signed-in user (from `useMe`) and a logout button. No new test here; it's exercised by the ProtectedRoute test in Task 30.
@@ -2967,6 +3000,7 @@ git commit -m "feat: add Dashboard showing the signed-in user"
 ## Task 30: Web — ProtectedRoute
 
 **Files:**
+
 - Create: `apps/web/src/routes/ProtectedRoute.tsx`
 - Test: `apps/web/tests/ProtectedRoute.test.tsx`
 
@@ -3063,6 +3097,7 @@ git commit -m "feat: add ProtectedRoute guard wired to useMe"
 ## Task 31: Web — router + App + main wiring
 
 **Files:**
+
 - Create: `apps/web/src/routes/router.tsx`
 - Modify: `apps/web/src/App.tsx`
 - Modify: `apps/web/src/main.tsx`

@@ -1,5 +1,3 @@
-I now have full context. Writing the plan.
-
 # Security Hardening Pass Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
@@ -44,6 +42,7 @@ Then `cd /app` (the api workdir) before running any `npm`/`npx` command. All `gi
 We want the regression test to drive a *low* `limit` so a test can trip the limiter in a handful of requests without 100 real calls. That means thresholds must be env-driven and zod-validated.
 
 **Files**
+
 - Modify: `apps/api/src/config/env.ts`
 - Modify: `apps/api/.env.example`
 - Test: (validated indirectly by Task 5; this task is config plumbing)
@@ -103,6 +102,7 @@ We want the regression test to drive a *low* `limit` so a test can trip the limi
 The auth limiter must be tight enough to constitute a lockout-style brake on credential stuffing, must return **429** when tripped, must use the `limit` option (not the deprecated `max`), must emit IETF `draft-8` headers and drop legacy `X-RateLimit-*`, and must be backed by the shared connected node-redis client so it works across api instances.
 
 **Files**
+
 - Modify: `apps/api/src/middleware/rateLimit.ts`
 - Test: covered by Task 5 (`tests/security/hardening.test.ts`)
 
@@ -178,6 +178,7 @@ The auth limiter must be tight enough to constitute a lockout-style brake on cre
 helmet's default CSP can break a Vite SPA. We set an explicit, SPA-appropriate CSP that merges with helmet's secure defaults, and an explicit HSTS (1 year + includeSubDomains). We also confirm CORS is locked to the single origin with credentials.
 
 **Files**
+
 - Modify: `apps/api/src/middleware/security.ts`
 - Test: CSP/HSTS header presence asserted in Task 5
 
@@ -253,6 +254,7 @@ helmet's default CSP can break a Vite SPA. We set an explicit, SPA-appropriate C
 The regression suite repeatedly needs to: bootstrap a CSRF token + its cookie, send authenticated/mutating requests carrying both cookies and the `x-csrf-token` header, parse `Set-Cookie` attributes, and extract a token from Mailpit. Centralise these so each test stays readable.
 
 **Files**
+
 - Create: `apps/api/tests/security/helpers.ts`
 - Test: this file *is* test infrastructure; it is exercised by Task 5
 
@@ -371,6 +373,7 @@ env: {
 Add that first (Step 0 below), since `env.ts` reads `process.env` at import time.
 
 **Files**
+
 - Modify: `apps/api/vitest.config.ts` (add `test.env`)
 - Create: `apps/api/tests/security/hardening.test.ts`
 - Modify: covered files from Tasks 1–4 (no further source changes expected)
@@ -729,6 +732,7 @@ Add that first (Step 0 below), since `env.ts` reads `process.env` at import time
 Capture the proven guarantees so a reader understands the threat model and the go-live gate. This file is the human-readable counterpart to the regression suite.
 
 **Files**
+
 - Create: `docs/SECURITY.md`
 - Modify: `docs/ROADMAP.md`
 
@@ -830,7 +834,7 @@ Capture the proven guarantees so a reader understands the threat model and the g
   ```
 
 - [ ] **Step 2: Tick the ROADMAP item.**
-  Open `docs/ROADMAP.md`, find the §10 line that reads `✅ **Baseline (ใส่ทุกข้อ)**: ...` and append `; พิสูจน์ด้วย regression test suite (`tests/security/hardening.test.ts`) + `docs/SECURITY.md`` to the end of that bullet so the roadmap records that the baseline is now proven, not just present. Make the edit as a single appended clause; do not restructure the file.
+  Open `docs/ROADMAP.md`, find the §10 line that reads `✅ **Baseline (ใส่ทุกข้อ)**: ...` and append a clause to the end of that bullet — พิสูจน์ด้วย regression test suite (`tests/security/hardening.test.ts`) + `docs/SECURITY.md` — so the roadmap records that the baseline is now proven, not just present. Make the edit as a single appended clause; do not restructure the file.
 
 - [ ] **Step 3: Sanity-check the markdown renders (no broken fences).**
 

@@ -8,7 +8,7 @@
 ## File ownership (who CREATES vs MODIFIES)
 
 | File | Owner (creates) | Others |
-|------|-----------------|--------|
+| --- | --- | --- |
 | `apps/api/src/config/env.ts` | **Plan 00** | import `env` |
 | `apps/api/src/db/prisma.ts` | **Plan 00** | import `prisma` |
 | `apps/api/src/redis/client.ts` | **Plan 00** | import `redis` |

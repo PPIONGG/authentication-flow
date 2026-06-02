@@ -13,6 +13,7 @@
 ## Files overview
 
 API (`/apps/api`):
+
 - **Create** `src/middleware/requireRole.ts` — ADMIN gate middleware.
 - **Create** `src/modules/admin/admin.routes.ts` — `GET /admin/users`, `GET /admin/audit`.
 - **Modify** `src/app.ts` — mount the admin router under `/api/admin`.
@@ -25,6 +26,7 @@ API (`/apps/api`):
 - **Create** `tests/admin/audit-events.test.ts` — an audited action appears in `GET /admin/audit`.
 
 Web (`/apps/web`):
+
 - **Create** `src/routes/RoleRoute.tsx` — role-gated route wrapper.
 - **Create** `src/features/admin/useAdminUsers.ts` — TanStack Query hook for `/api/admin/users`.
 - **Create** `src/features/admin/useAdminAudit.ts` — TanStack Query hook for `/api/admin/audit`.
@@ -39,6 +41,7 @@ Web (`/apps/web`):
 ## Task 1: `requireRole` middleware (API)
 
 **Files**
+
 - Create: `/apps/api/tests/admin/requireRole.test.ts`
 - Create: `/apps/api/src/middleware/requireRole.ts`
 
@@ -85,9 +88,11 @@ This middleware assumes `requireAuth` (from FOUNDATION, `src/middleware/requireA
   ```
 
 - [ ] **Step 2: Run the test and confirm it FAILS.**
+
   ```bash
   docker compose exec api npx vitest run tests/admin/requireRole.test.ts
   ```
+
   Expected: failure with `Cannot find module '../../src/middleware/requireRole.js'` (the file does not exist yet).
 
 - [ ] **Step 3: Implement the middleware (minimal).**
@@ -118,12 +123,15 @@ This middleware assumes `requireAuth` (from FOUNDATION, `src/middleware/requireA
   Note: `Role` is imported from the Prisma generated output (`src/generated/prisma/client`, per FOUNDATION's Prisma 7 `prisma-client` generator). If the surrounding session-typing for `express-session` already augments `SessionData` with `{ userId; role }` (it should, from Plan 01/02), the local cast is harmless and keeps this middleware self-contained.
 
 - [ ] **Step 4: Run the test and confirm it PASSES.**
+
   ```bash
   docker compose exec api npx vitest run tests/admin/requireRole.test.ts
   ```
+
   Expected: `3 passed`.
 
 - [ ] **Step 5: Commit.**
+
   ```bash
   git add apps/api/src/middleware/requireRole.ts apps/api/tests/admin/requireRole.test.ts
   git commit -m "feat: add requireRole ADMIN gate middleware"
@@ -134,6 +142,7 @@ This middleware assumes `requireAuth` (from FOUNDATION, `src/middleware/requireA
 ## Task 2: `GET /api/admin/users` endpoint
 
 **Files**
+
 - Create: `/apps/api/tests/admin/admin.routes.test.ts` (users portion)
 - Create: `/apps/api/src/modules/admin/admin.routes.ts`
 - Modify: `/apps/api/src/app.ts`
@@ -222,9 +231,11 @@ These tests sign in through the real `/api/auth/login` flow so the session truly
   Note: `hashPassword` is the Plan-01 export in `src/lib/password.ts`. If that file exports the hashing function under a different name (e.g. `hash`), adjust the import in this test to match the existing export — do not invent a new one.
 
 - [ ] **Step 2: Run the test and confirm it FAILS.**
+
   ```bash
   docker compose exec api npx vitest run tests/admin/admin.routes.test.ts
   ```
+
   Expected: failures — the 401 test may pass incidentally (no route → Express 404, not 401), but the admin/non-admin tests fail because `/api/admin/users` is unmounted (404). This is the RED state; proceed.
 
 - [ ] **Step 3: Create the admin router with the users endpoint.**
@@ -279,12 +290,15 @@ These tests sign in through the real `/api/auth/login` flow so the session truly
   The relative position must be: all routers mounted, then `app.use(errorHandler)` last (FOUNDATION middleware order — error handler is always last).
 
 - [ ] **Step 5: Run the test and confirm it PASSES.**
+
   ```bash
   docker compose exec api npx vitest run tests/admin/admin.routes.test.ts
   ```
+
   Expected: the three `GET /api/admin/users` tests pass (`3 passed`).
 
 - [ ] **Step 6: Commit.**
+
   ```bash
   git add apps/api/src/modules/admin/admin.routes.ts apps/api/src/app.ts apps/api/tests/admin/admin.routes.test.ts
   git commit -m "feat: add GET /api/admin/users admin-gated endpoint"
@@ -295,6 +309,7 @@ These tests sign in through the real `/api/auth/login` flow so the session truly
 ## Task 3: `GET /api/admin/audit` endpoint
 
 **Files**
+
 - Modify: `/apps/api/tests/admin/admin.routes.test.ts` (add audit block)
 - Modify: `/apps/api/src/modules/admin/admin.routes.ts`
 
@@ -340,9 +355,11 @@ These tests sign in through the real `/api/auth/login` flow so the session truly
   ```
 
 - [ ] **Step 2: Run the test and confirm it FAILS.**
+
   ```bash
   docker compose exec api npx vitest run tests/admin/admin.routes.test.ts
   ```
+
   Expected: the new audit `describe` fails — the 403 test may pass (route 404), but the admin audit test fails with `404` because `/api/admin/audit` is unmounted.
 
 - [ ] **Step 3: Add the audit endpoint to the admin router.**
@@ -375,12 +392,15 @@ These tests sign in through the real `/api/auth/login` flow so the session truly
   Note: the `user` relation is nullable (`AuditLog.user User?` with `onDelete: SetNull`), so `event.user` may be `null` for events whose User was deleted; the `select` handles that automatically.
 
 - [ ] **Step 4: Run the test and confirm it PASSES.**
+
   ```bash
   docker compose exec api npx vitest run tests/admin/admin.routes.test.ts
   ```
+
   Expected: all tests in the file pass (`5 passed`).
 
 - [ ] **Step 5: Commit.**
+
   ```bash
   git add apps/api/src/modules/admin/admin.routes.ts apps/api/tests/admin/admin.routes.test.ts
   git commit -m "feat: add GET /api/admin/audit admin-gated endpoint"
@@ -391,6 +411,7 @@ These tests sign in through the real `/api/auth/login` flow so the session truly
 ## Task 4: Ensure auth & account events are audited end-to-end
 
 **Files**
+
 - Create: `/apps/api/tests/admin/audit-events.test.ts`
 - Modify: `/apps/api/src/modules/auth/auth.service.ts` (only if a gap is found)
 - Modify: `/apps/api/src/modules/account/account.service.ts` (only if a gap is found)
@@ -495,9 +516,11 @@ Per CROSS-SLICE EVOLUTION, Plan 04 "ensures account events are audited" and reus
   ```
 
 - [ ] **Step 2: Run the test and observe which events are missing.**
+
   ```bash
   docker compose exec api npx vitest run tests/admin/audit-events.test.ts
   ```
+
   Expected: each assertion that fails names a specific missing event (`login_success`, `login_fail`, or `password_change`). Note exactly which ones are RED — only those need a service edit. (Per cross-slice notes, `login_success`/`login_fail`/`register`/`password_reset` are wired in Plans 01–02; `password_change`/`email_change` may need wiring here.)
 
 - [ ] **Step 3: Wire any missing auth events in `auth.service.ts`.**
@@ -543,22 +566,28 @@ Per CROSS-SLICE EVOLUTION, Plan 04 "ensures account events are audited" and reus
   Use the exact `writeAudit({ event, ... })` object-form signature from `src/lib/audit.ts`, with the canonical event strings `password_change` and `email_change` (matching Plan 03 which writes them).
 
 - [ ] **Step 5: Re-run the audit-events test and confirm it PASSES.**
+
   ```bash
   docker compose exec api npx vitest run tests/admin/audit-events.test.ts
   ```
+
   Expected: `3 passed`.
 
 - [ ] **Step 6: Run the full API suite to confirm no regression.**
+
   ```bash
   docker compose exec api npx vitest run
   ```
+
   Expected: all API tests pass (no previously-green test broke).
 
 - [ ] **Step 7: Commit.**
+
   ```bash
   git add apps/api/tests/admin/audit-events.test.ts apps/api/src/modules/auth/auth.service.ts apps/api/src/modules/account/account.service.ts
   git commit -m "test: verify auth and account events surface in admin audit log"
   ```
+
   (If no service file changed because all events were already wired, drop those two paths from the `git add` and commit only the test file.)
 
 ---
@@ -566,6 +595,7 @@ Per CROSS-SLICE EVOLUTION, Plan 04 "ensures account events are audited" and reus
 ## Task 5: `promote-to-admin` CLI script (API)
 
 **Files**
+
 - Create: `/apps/api/scripts/promote-to-admin.ts`
 - Modify: `/apps/api/package.json`
 
@@ -620,12 +650,15 @@ A one-off operational script to flip a User's `role` to `ADMIN` by email, so an 
 
 - [ ] **Step 3: Manually verify against the dev DB.**
   Create a throwaway user via the API (or use one that exists), then run:
+
   ```bash
   docker compose exec api npm run promote:admin -- someone@example.com
   ```
+
   Expected stdout: `Promoted someone@example.com -> ADMIN`. Running with a non-existent email exits `1` and prints `No user found with email: ...`. Running with no argument prints the usage line and exits `1`.
 
 - [ ] **Step 4: Commit.**
+
   ```bash
   git add apps/api/scripts/promote-to-admin.ts apps/api/package.json
   git commit -m "feat: add promote-to-admin CLI script"
@@ -636,6 +669,7 @@ A one-off operational script to flip a User's `role` to `ADMIN` by email, so an 
 ## Task 6: `RoleRoute` guard (Web)
 
 **Files**
+
 - Create: `/apps/web/tests/admin/RoleRoute.test.tsx`
 - Create: `/apps/web/src/routes/RoleRoute.tsx`
 
@@ -706,9 +740,11 @@ A one-off operational script to flip a User's `role` to `ADMIN` by email, so an 
   Note: this assumes `useMe()` returns the TanStack Query result shape `{ data, isPending }` where `data` is the user or `null`. If the existing `useMe` exposes the user under a different field (e.g. `{ user, isPending }`), adjust the mock return values and `RoleRoute` to read that exact field.
 
 - [ ] **Step 2: Run the test and confirm it FAILS.**
+
   ```bash
   docker compose exec web npx vitest run tests/admin/RoleRoute.test.tsx
   ```
+
   Expected: failure resolving `../../src/routes/RoleRoute` (module does not exist).
 
 - [ ] **Step 3: Implement `RoleRoute`.**
@@ -737,12 +773,15 @@ A one-off operational script to flip a User's `role` to `ADMIN` by email, so an 
   ```
 
 - [ ] **Step 4: Run the test and confirm it PASSES.**
+
   ```bash
   docker compose exec web npx vitest run tests/admin/RoleRoute.test.tsx
   ```
+
   Expected: `4 passed`.
 
 - [ ] **Step 5: Commit.**
+
   ```bash
   git add apps/web/src/routes/RoleRoute.tsx apps/web/tests/admin/RoleRoute.test.tsx
   git commit -m "feat: add RoleRoute guard for ADMIN-only routes"
@@ -753,6 +792,7 @@ A one-off operational script to flip a User's `role` to `ADMIN` by email, so an 
 ## Task 7: Admin data hooks (Web)
 
 **Files**
+
 - Create: `/apps/web/src/features/admin/useAdminUsers.ts`
 - Create: `/apps/web/src/features/admin/useAdminAudit.ts`
 
@@ -819,6 +859,7 @@ Two TanStack Query v5 hooks fetching the admin endpoints through the shared `api
   Note: per CONTRACTS, `apiClient.get(path)` returns the parsed JSON body and callers pass the **full path including `/api`** (so `apiClient.get('/api/admin/users')` hits `/api/admin/users`). Do not change `apiClient` itself.
 
 - [ ] **Step 3: Commit.**
+
   ```bash
   git add apps/web/src/features/admin/useAdminUsers.ts apps/web/src/features/admin/useAdminAudit.ts
   git commit -m "feat: add admin users and audit query hooks"
@@ -829,6 +870,7 @@ Two TanStack Query v5 hooks fetching the admin endpoints through the shared `api
 ## Task 8: `AdminPage` listing Users + audit events (Web)
 
 **Files**
+
 - Create: `/apps/web/tests/admin/AdminPage.test.tsx`
 - Create: `/apps/web/src/features/admin/AdminPage.tsx`
 
@@ -913,9 +955,11 @@ Two TanStack Query v5 hooks fetching the admin endpoints through the shared `api
   Note: MSW intercepts the absolute `/api/...` paths the `apiClient` requests. If `apiClient` prefixes a different base, update the `http.get(...)` paths to match exactly what the client requests in this test environment.
 
 - [ ] **Step 2: Run the test and confirm it FAILS.**
+
   ```bash
   docker compose exec web npx vitest run tests/admin/AdminPage.test.tsx
   ```
+
   Expected: failure resolving `../../src/features/admin/AdminPage` (module does not exist).
 
 - [ ] **Step 3: Implement `AdminPage`.**
@@ -994,12 +1038,15 @@ Two TanStack Query v5 hooks fetching the admin endpoints through the shared `api
   ```
 
 - [ ] **Step 4: Run the test and confirm it PASSES.**
+
   ```bash
   docker compose exec web npx vitest run tests/admin/AdminPage.test.tsx
   ```
+
   Expected: `2 passed`.
 
 - [ ] **Step 5: Commit.**
+
   ```bash
   git add apps/web/src/features/admin/AdminPage.tsx apps/web/tests/admin/AdminPage.test.tsx
   git commit -m "feat: add AdminPage listing users and recent audit events"
@@ -1010,6 +1057,7 @@ Two TanStack Query v5 hooks fetching the admin endpoints through the shared `api
 ## Task 9: Wire `/admin` route + conditional nav (Web)
 
 **Files**
+
 - Modify: `/apps/web/src/routes/router.tsx`
 - Modify: `/apps/web/src/App.tsx`
 
@@ -1044,15 +1092,18 @@ Two TanStack Query v5 hooks fetching the admin endpoints through the shared `api
   where `me` is the existing `const me = useMe()` result in `App.tsx`. If `App.tsx` reads the user under a different variable/field, use that exact reference (e.g. `user?.role === 'ADMIN'`). Only the role-conditional `Link` is new.
 
 - [ ] **Step 3: Run the full web test suite to confirm no regression.**
+
   ```bash
   docker compose exec web npx vitest run
   ```
+
   Expected: all web tests pass, including the new `RoleRoute` and `AdminPage` suites.
 
 - [ ] **Step 4: Manual smoke check in the browser.**
   With the dev stack up (`docker compose up`), visit `https://localhost`. Sign in as a normal user → no "Admin" link; navigating directly to `https://localhost/admin` redirects to `/`. Promote that user (`docker compose exec api npm run promote:admin -- <email>`), sign out and back in → "Admin" link appears, `/admin` shows the Users and audit tables.
 
 - [ ] **Step 5: Commit.**
+
   ```bash
   git add apps/web/src/routes/router.tsx apps/web/src/App.tsx
   git commit -m "feat: wire /admin route behind RoleRoute with conditional nav"
@@ -1063,28 +1114,36 @@ Two TanStack Query v5 hooks fetching the admin endpoints through the shared `api
 ## Task 10: Full-suite verification
 
 **Files**
+
 - None (verification only)
 
 - [ ] **Step 1: Run the entire API test suite.**
+
   ```bash
   docker compose exec api npx vitest run
   ```
+
   Expected: all suites green, including `tests/admin/requireRole.test.ts`, `tests/admin/admin.routes.test.ts`, and `tests/admin/audit-events.test.ts`.
 
 - [ ] **Step 2: Run the entire web test suite.**
+
   ```bash
   docker compose exec web npx vitest run
   ```
+
   Expected: all suites green, including `tests/admin/RoleRoute.test.tsx` and `tests/admin/AdminPage.test.tsx`.
 
 - [ ] **Step 3: Type-check both apps.**
+
   ```bash
   docker compose exec api npx tsc --noEmit
   docker compose exec web npx tsc --noEmit
   ```
+
   Expected: no type errors in either app.
 
 - [ ] **Step 4: Final commit (only if any lint/type fixups were needed).**
+
   ```bash
   git add -A
   git commit -m "chore: finalize RBAC, admin routes and audit log viewer slice"

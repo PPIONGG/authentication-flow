@@ -13,6 +13,7 @@
 ## Files Overview
 
 **Root**
+
 - `docker-compose.yml` — 6 services + healthchecks + depends_on
 - `Caddyfile` — single origin, tls internal, `/api/*` proxy, Vite HMR, SPA fallback
 - `.env.example` — all config keys
@@ -20,6 +21,7 @@
 - `.gitignore`
 
 **apps/api/** (Express + TS ESM)
+
 - `package.json`, `tsconfig.json`, `vitest.config.ts`, `Dockerfile`, `docker-entrypoint.sh`
 - `prisma.config.ts`, `prisma/schema.prisma`, `prisma/migrations/**`
 - `src/config/env.ts`, `src/db/prisma.ts`, `src/redis/client.ts`
@@ -27,6 +29,7 @@
 - `tests/health.test.ts`
 
 **apps/web/** (Vite + React + TS)
+
 - `package.json`, `tsconfig.json`, `tsconfig.node.json`, `vite.config.ts`, `vitest.config.ts`, `Dockerfile`
 - `index.html`, `src/main.tsx`, `src/App.tsx`, `src/vite-env.d.ts`
 - `src/lib/queryClient.ts`, `src/routes/router.tsx`
@@ -37,10 +40,12 @@
 ## Task 1: Root scaffolding (.gitignore + .env.example)
 
 **Files**
+
 - Create: `.gitignore`
 - Create: `.env.example`
 
 - [ ] **Step 1: Create `.gitignore` at repo root.**
+
   ```gitignore
   # dependencies
   node_modules/
@@ -66,6 +71,7 @@
   ```
 
 - [ ] **Step 2: Create `.env.example` at repo root.** These keys match FOUNDATION's ENV list. The hostnames (`db`, `redis`, `mailpit`) are Docker service names.
+
   ```dotenv
   # Postgres connection used by Prisma (service name "db" inside the compose network)
   DATABASE_URL=postgresql://app:app@db:5432/app?schema=public
@@ -92,19 +98,23 @@
   ```
 
 - [ ] **Step 3: Create the local `.env` from the example and verify.**
+
   ```bash
   cp /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/.env.example \
      /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/.env
   ls -la /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/.env
   ```
+
   Expected: the `.env` file exists. (It is gitignored, so it will not be committed.)
 
 - [ ] **Step 4: Initialize the git repo and commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow init
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add .gitignore .env.example
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "chore: add root gitignore and env example"
   ```
+
   Expected: one commit created; `git status` shows `.env` as untracked/ignored (it will not appear because `node_modules`/`.env` are ignored).
 
 ---
@@ -112,11 +122,13 @@
 ## Task 2: API package scaffolding (package.json, tsconfig, vitest config)
 
 **Files**
+
 - Create: `apps/api/package.json`
 - Create: `apps/api/tsconfig.json`
 - Create: `apps/api/vitest.config.ts`
 
 - [ ] **Step 1: Create `apps/api/package.json`.** ESM (`"type": "module"`), pinned versions per FOUNDATION's verified library reference.
+
   ```json
   {
     "name": "@authentication-flow/api",
@@ -168,6 +180,7 @@
   ```
 
 - [ ] **Step 2: Create `apps/api/tsconfig.json`.** Strict + ESM + NodeNext resolution.
+
   ```json
   {
     "compilerOptions": {
@@ -192,6 +205,7 @@
   ```
 
 - [ ] **Step 3: Create `apps/api/vitest.config.ts`.** Serialize files (single throwaway DB later) and use the forks pool, per FOUNDATION test infra guidance.
+
   ```ts
   import { defineConfig } from "vitest/config";
 
@@ -207,13 +221,16 @@
   ```
 
 - [ ] **Step 4: Install dependencies and confirm the toolchain resolves.**
+
   ```bash
   npm --prefix /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api install
   npx --prefix /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api tsc --version
   ```
+
   Expected: install completes; `tsc` prints a `Version 5.x` line.
 
 - [ ] **Step 5: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add apps/api/package.json apps/api/tsconfig.json apps/api/vitest.config.ts
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "chore: scaffold api package, tsconfig and vitest config"
@@ -224,11 +241,13 @@
 ## Task 3: Prisma schema, config, and PrismaClient singleton
 
 **Files**
+
 - Create: `apps/api/prisma/schema.prisma`
 - Create: `apps/api/prisma.config.ts`
 - Create: `apps/api/src/db/prisma.ts`
 
 - [ ] **Step 1: Create `apps/api/prisma/schema.prisma`** with the FULL data model from FOUNDATION (all enums + models). Uses the Prisma 7 `prisma-client` generator emitting ESM into `src/generated/prisma`; no `url` in the schema (it lives in `prisma.config.ts`).
+
   ```prisma
   generator client {
     provider     = "prisma-client"
@@ -291,6 +310,7 @@
   ```
 
 - [ ] **Step 2: Create `apps/api/prisma.config.ts`.** Prisma 7 no longer auto-loads `.env`, so `import "dotenv/config"` is required; the datasource URL is supplied here.
+
   ```ts
   import "dotenv/config";
   import { defineConfig, env } from "prisma/config";
@@ -309,13 +329,16 @@
   ```
 
 - [ ] **Step 3: Generate the Prisma client locally.** This emits plain-TS client code into `apps/api/src/generated/prisma`.
+
   ```bash
   npm --prefix /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api run prisma:generate
   ls /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api/src/generated/prisma
   ```
+
   Expected: generation succeeds; the `src/generated/prisma` directory contains a `client.ts` (and supporting files).
 
 - [ ] **Step 4: Create `apps/api/src/db/prisma.ts`** — the PrismaClient singleton using the Prisma 7 Postgres driver adapter. Import path is the generated output dir, NOT `@prisma/client`.
+
   ```ts
   import { PrismaClient } from "./../generated/prisma/client.js";
   import { PrismaPg } from "@prisma/adapter-pg";
@@ -331,13 +354,17 @@
 
   if (env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
   ```
+
   Note: `src/config/env.ts` is created in Task 4. This import will only resolve once Task 4 is complete; the file is committed now and verified end-to-end in Task 4.
 
 - [ ] **Step 5: Create the initial migration against a throwaway local Postgres.** Start a disposable container, point `DATABASE_URL` at it for the duration of the command, and run `migrate dev` to author `prisma/migrations`.
+
   ```bash
   docker run --rm -d --name afm-pg-tmp -e POSTGRES_USER=app -e POSTGRES_PASSWORD=app -e POSTGRES_DB=app -p 55432:5432 postgres:17-alpine
   ```
+
   Wait for readiness, then create the migration:
+
   ```bash
   until docker exec afm-pg-tmp pg_isready -U app -d app >/dev/null 2>&1; do :; done
   DATABASE_URL="postgresql://app:app@localhost:55432/app?schema=public" \
@@ -346,9 +373,11 @@
   docker rm -f afm-pg-tmp
   ls /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api/prisma/migrations
   ```
+
   Expected: a timestamped migration folder (e.g. `20260601_init/`) containing `migration.sql` with `CREATE TABLE "User"`, `"VerificationToken"`, `"AuditLog"` and the two enums; the temp container is removed.
 
 - [ ] **Step 6: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add apps/api/prisma/schema.prisma apps/api/prisma.config.ts apps/api/prisma/migrations apps/api/src/db/prisma.ts
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "feat: add full prisma schema, config, initial migration and client singleton"
@@ -359,9 +388,11 @@
 ## Task 4: Zod-validated env config
 
 **Files**
+
 - Create: `apps/api/src/config/env.ts`
 
 - [ ] **Step 1: Create `apps/api/src/config/env.ts`.** Zod 4 schema validates `process.env` at startup; exports a typed, frozen `env` object. `dotenv/config` loads `.env` for local (non-Docker) runs.
+
   ```ts
   import "dotenv/config";
   import { z } from "zod";
@@ -395,12 +426,15 @@
   ```
 
 - [ ] **Step 2: Type-check the API source so far.** Confirms `env.ts`, `prisma.ts`, and the generated client all compile under strict ESM.
+
   ```bash
   npx --prefix /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api tsc --noEmit -p /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api/tsconfig.json
   ```
+
   Expected: no output (exit code 0). If `src/generated/prisma` is reported missing, re-run `npm --prefix apps/api run prisma:generate` (Task 3, Step 3).
 
 - [ ] **Step 3: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add apps/api/src/config/env.ts
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "feat: add zod-validated env config"
@@ -411,9 +445,11 @@
 ## Task 5: Redis client singleton
 
 **Files**
+
 - Create: `apps/api/src/redis/client.ts`
 
 - [ ] **Step 1: Create `apps/api/src/redis/client.ts`.** node-redis 6 `createClient` (must call `connect()` — v4+ does not auto-connect). Exposes a lazy `connectRedis()` the server bootstrap awaits before listening; later plans pass `redis` to connect-redis and rate-limit-redis. The canonical singleton export name is `redis` (NOT `redisClient`).
+
   ```ts
   import { createClient } from "redis";
   import { env } from "../config/env.js";
@@ -440,12 +476,15 @@
   ```
 
 - [ ] **Step 2: Type-check.**
+
   ```bash
   npx --prefix /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api tsc --noEmit -p /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api/tsconfig.json
   ```
+
   Expected: no output (exit code 0).
 
 - [ ] **Step 3: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add apps/api/src/redis/client.ts
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "feat: add redis client singleton"
@@ -456,10 +495,12 @@
 ## Task 6: Express app skeleton + /api/health (TDD)
 
 **Files**
+
 - Create: `apps/api/tests/health.test.ts`
 - Create: `apps/api/src/app.ts`
 
 - [ ] **Step 1: Write the failing integration test `apps/api/tests/health.test.ts`.** It imports the not-yet-existing `app` and asserts `GET /api/health` returns `200 {status:"ok"}`. Supertest binds an ephemeral port — never call `app.listen()` in the app module.
+
   ```ts
   import request from "supertest";
   import { describe, it, expect } from "vitest";
@@ -475,12 +516,15 @@
   ```
 
 - [ ] **Step 2: Run the test and watch it FAIL.**
+
   ```bash
   npm --prefix /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api test
   ```
+
   Expected: FAIL — Vitest reports it cannot resolve `../src/app.js` (module not found), because `app.ts` does not exist yet.
 
 - [ ] **Step 3: Create `apps/api/src/app.ts`** — the Express 5 app with the middleware-order skeleton described in FOUNDATION (security headers, CORS, body parsing, cookie parsing) and the public `/api/health` route. Heavier middleware (session, csrf, rate-limit, auth, error handler) is wired in later plans; the skeleton documents the order without behavior that would block this slice.
+
   ```ts
   import express from "express";
   import helmet from "helmet";
@@ -528,12 +572,15 @@
   ```
 
 - [ ] **Step 4: Run the test and watch it PASS.**
+
   ```bash
   npm --prefix /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api test
   ```
+
   Expected: PASS — `1 passed (1)`; the health test returns `{ status: "ok" }`.
 
 - [ ] **Step 5: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add apps/api/tests/health.test.ts apps/api/src/app.ts
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "feat: add express app skeleton and /api/health endpoint"
@@ -544,9 +591,11 @@
 ## Task 7: API server bootstrap
 
 **Files**
+
 - Create: `apps/api/src/server.ts`
 
 - [ ] **Step 1: Create `apps/api/src/server.ts`.** Connects Redis, then starts the HTTP listener on `env.PORT` (3000). Kept separate from `app.ts` so tests import `app` without a live server.
+
   ```ts
   import { app } from "./app.js";
   import { env } from "./config/env.js";
@@ -566,13 +615,16 @@
   ```
 
 - [ ] **Step 2: Build the API to confirm the production entrypoint compiles.**
+
   ```bash
   npm --prefix /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api run build
   ls /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api/dist/server.js
   ```
+
   Expected: build succeeds; `dist/server.js` exists.
 
 - [ ] **Step 3: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add apps/api/src/server.ts
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "feat: add api server bootstrap with redis connect"
@@ -583,11 +635,13 @@
 ## Task 8: API Dockerfile + entrypoint
 
 **Files**
+
 - Create: `apps/api/Dockerfile`
 - Create: `apps/api/docker-entrypoint.sh`
 - Create: `apps/api/.dockerignore`
 
 - [ ] **Step 1: Create `apps/api/.dockerignore`.** Keep the build context small and avoid copying host artifacts.
+
   ```dockerignore
   node_modules
   dist
@@ -597,6 +651,7 @@
   ```
 
 - [ ] **Step 2: Create `apps/api/Dockerfile`.** Node 22 (required by Prisma 7), installs deps, generates the Prisma client at build time, and runs in dev via `tsx watch`. `prisma migrate deploy` runs at container start (entrypoint), never at build (DB unreachable during build). OpenSSL is installed for Prisma.
+
   ```dockerfile
   FROM node:22-slim
 
@@ -626,6 +681,7 @@
   ```
 
 - [ ] **Step 3: Create `apps/api/docker-entrypoint.sh`.** Applies pending migrations non-interactively, then starts the dev watcher (FOUNDATION: "api entrypoint runs `prisma migrate deploy` then `tsx watch`").
+
   ```sh
   #!/bin/sh
   set -e
@@ -638,12 +694,15 @@
   ```
 
 - [ ] **Step 4: Make the entrypoint executable on disk (so the committed file carries the exec bit).**
+
   ```bash
   chmod +x /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api/docker-entrypoint.sh
   ```
+
   Expected: no output (success).
 
 - [ ] **Step 5: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add apps/api/Dockerfile apps/api/docker-entrypoint.sh apps/api/.dockerignore
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "chore: add api dockerfile and migrate-deploy entrypoint"
@@ -654,6 +713,7 @@
 ## Task 9: Web package scaffolding (package.json, tsconfig, vite/vitest config)
 
 **Files**
+
 - Create: `apps/web/package.json`
 - Create: `apps/web/tsconfig.json`
 - Create: `apps/web/tsconfig.node.json`
@@ -661,6 +721,7 @@
 - Create: `apps/web/vitest.config.ts`
 
 - [ ] **Step 1: Create `apps/web/package.json`.** Pinned versions per FOUNDATION's frontend reference (React Router 7, TanStack Query 5, Vite 8, Vitest 4 + RTL + jsdom).
+
   ```json
   {
     "name": "@authentication-flow/web",
@@ -694,6 +755,7 @@
   ```
 
 - [ ] **Step 2: Create `apps/web/tsconfig.json`.** Strict, bundler resolution, JSX for React 19.
+
   ```json
   {
     "compilerOptions": {
@@ -717,6 +779,7 @@
   ```
 
 - [ ] **Step 3: Create `apps/web/tsconfig.node.json`** (for the Vite config file itself).
+
   ```json
   {
     "compilerOptions": {
@@ -734,6 +797,7 @@
   ```
 
 - [ ] **Step 4: Create `apps/web/vite.config.ts`.** Binds to all interfaces (needed inside Docker), and configures HMR to connect back over `wss` on 443 because the page is served via Caddy HTTPS (avoids the insecure-ws / redirect-loop gotcha). `allowedHosts` permits the Caddy `localhost` host.
+
   ```ts
   import { defineConfig } from "vite";
   import react from "@vitejs/plugin-react";
@@ -757,6 +821,7 @@
   ```
 
 - [ ] **Step 5: Create `apps/web/vitest.config.ts`.** jsdom environment, global test APIs, and a setup file (created in Task 11) that wires jest-dom matchers.
+
   ```ts
   import { defineConfig } from "vitest/config";
   import react from "@vitejs/plugin-react";
@@ -773,12 +838,15 @@
   ```
 
 - [ ] **Step 6: Install dependencies.**
+
   ```bash
   npm --prefix /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/web install
   ```
+
   Expected: install completes without peer-dependency errors.
 
 - [ ] **Step 7: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add apps/web/package.json apps/web/tsconfig.json apps/web/tsconfig.node.json apps/web/vite.config.ts apps/web/vitest.config.ts
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "chore: scaffold web package, tsconfig, vite and vitest config"
@@ -789,6 +857,7 @@
 ## Task 10: Web app source (entry, App, router skeleton, query client, hello page)
 
 **Files**
+
 - Create: `apps/web/index.html`
 - Create: `apps/web/src/vite-env.d.ts`
 - Create: `apps/web/src/lib/queryClient.ts`
@@ -797,6 +866,7 @@
 - Create: `apps/web/src/main.tsx`
 
 - [ ] **Step 1: Create `apps/web/index.html`** — the Vite entry HTML.
+
   ```html
   <!doctype html>
   <html lang="en">
@@ -813,6 +883,7 @@
   ```
 
 - [ ] **Step 2: Create `apps/web/src/vite-env.d.ts`** — Vite client types + typed env (per FOUNDATION frontend reference).
+
   ```ts
   /// <reference types="vite/client" />
 
@@ -826,6 +897,7 @@
   ```
 
 - [ ] **Step 3: Create `apps/web/src/lib/queryClient.ts`** — TanStack Query client with a 401-aware default (no retry), per FOUNDATION.
+
   ```ts
   import { QueryClient } from "@tanstack/react-query";
 
@@ -840,6 +912,7 @@
   ```
 
 - [ ] **Step 4: Create `apps/web/src/routes/router.tsx`** — declarative React Router 7 skeleton. All imports come from `react-router` (NOT `react-router-dom`). A single public hello route now; protected/role routes are added in later plans.
+
   ```tsx
   import { BrowserRouter, Routes, Route } from "react-router";
   import { HelloPage } from "../App";
@@ -860,6 +933,7 @@
   ```
 
 - [ ] **Step 5: Create `apps/web/src/App.tsx`** — the hello page component asserted by the smoke test and served through Caddy.
+
   ```tsx
   export function HelloPage() {
     return (
@@ -872,6 +946,7 @@
   ```
 
 - [ ] **Step 6: Create `apps/web/src/main.tsx`** — React entry wiring the QueryClientProvider around the router.
+
   ```tsx
   import { StrictMode } from "react";
   import { createRoot } from "react-dom/client";
@@ -892,12 +967,15 @@
   ```
 
 - [ ] **Step 7: Type-check + production build to confirm the SPA compiles.**
+
   ```bash
   npm --prefix /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/web run build
   ```
+
   Expected: `tsc -b` passes and `vite build` writes `apps/web/dist/` without errors.
 
 - [ ] **Step 8: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add apps/web/index.html apps/web/src
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "feat: add web entry, hello page, router skeleton and query client"
@@ -908,15 +986,18 @@
 ## Task 11: Web smoke test (TDD)
 
 **Files**
+
 - Create: `apps/web/tests/setup.ts`
 - Create: `apps/web/tests/App.test.tsx`
 
 - [ ] **Step 1: Create `apps/web/tests/setup.ts`** — registers jest-dom matchers for every test file.
+
   ```ts
   import "@testing-library/jest-dom/vitest";
   ```
 
 - [ ] **Step 2: Write the smoke test `apps/web/tests/App.test.tsx`** that renders the hello page and asserts its heading.
+
   ```tsx
   import { render, screen } from "@testing-library/react";
   import { describe, it, expect } from "vitest";
@@ -933,14 +1014,17 @@
   ```
 
 - [ ] **Step 3: Run the web test suite and watch it PASS** (the component already exists from Task 10, so this confirms the Vitest + RTL + jsdom wiring is correct).
+
   ```bash
   npm --prefix /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/web test
   ```
+
   Expected: PASS — `1 passed (1)`; the heading is found.
 
   To prove the test is real (red-green discipline), temporarily change the heading text in `apps/web/src/App.tsx` from `authentication-flow` to `broken`, re-run the command above, observe FAIL (`Unable to find an accessible element with the role "heading" and name /authentication-flow/i`), then revert the change and re-run to confirm PASS again.
 
 - [ ] **Step 4: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add apps/web/tests/setup.ts apps/web/tests/App.test.tsx
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "test: add web smoke test for hello page"
@@ -951,10 +1035,12 @@
 ## Task 12: Web Dockerfile
 
 **Files**
+
 - Create: `apps/web/Dockerfile`
 - Create: `apps/web/.dockerignore`
 
 - [ ] **Step 1: Create `apps/web/.dockerignore`.**
+
   ```dockerignore
   node_modules
   dist
@@ -963,6 +1049,7 @@
   ```
 
 - [ ] **Step 2: Create `apps/web/Dockerfile`.** Dev image runs the Vite dev server (HMR) bound to all interfaces on 5173; Caddy proxies to it. Production static-serving is out of scope for this dev stack.
+
   ```dockerfile
   FROM node:22-slim
 
@@ -979,6 +1066,7 @@
   ```
 
 - [ ] **Step 3: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add apps/web/Dockerfile apps/web/.dockerignore
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "chore: add web dockerfile running vite dev server"
@@ -989,9 +1077,11 @@
 ## Task 13: Caddyfile (single origin, tls internal, /api proxy, Vite HMR, SPA fallback)
 
 **Files**
+
 - Create: `Caddyfile`
 
 - [ ] **Step 1: Create `Caddyfile` at repo root.** Single `localhost` origin with `tls internal` (so Secure cookies work in dev). A `route { }` block forces literal directive order so `/api/*` is proxied to the `api` service BEFORE the catch-all SPA proxy. The catch-all `reverse_proxy` targets the Vite dev server (`web:5173`), which serves `index.html`, performs its own SPA history handling, and upgrades the HMR websocket transparently. Hostnames are Docker service names.
+
   ```caddyfile
   {
   	# In a container Caddy cannot install its root CA into a host trust store.
@@ -1014,6 +1104,7 @@
   ```
 
 - [ ] **Step 2: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add Caddyfile
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "chore: add caddyfile with tls internal, api proxy and vite hmr"
@@ -1024,9 +1115,11 @@
 ## Task 14: docker-compose.yml (6 services + healthchecks + depends_on)
 
 **Files**
+
 - Create: `docker-compose.yml`
 
 - [ ] **Step 1: Create `docker-compose.yml` at repo root.** Six services per FOUNDATION: `caddy` (80/443), `web` (5173 internal), `api` (3000 internal), `db` (postgres + `pgdata` volume), `redis`, `mailpit` (1025 + 8025). The obsolete top-level `version:` key is omitted. `api` waits for `db`, `redis`, and `mailpit` to be healthy. Source is bind-mounted for dev hot-reload; `node_modules`/generated dirs are masked with anonymous volumes so host artifacts don't clobber the in-image installs.
+
   ```yaml
   services:
     db:
@@ -1146,12 +1239,15 @@
   ```
 
 - [ ] **Step 2: Validate the compose file parses.**
+
   ```bash
   docker compose -f /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/docker-compose.yml config >/dev/null && echo "compose OK"
   ```
+
   Expected: prints `compose OK` (no parse/interpolation errors). If it complains about a missing `.env`, confirm Task 1 Step 3 created `/Users/thammasornlueadtaharn/Desktop/project/authentication-flow/.env`.
 
 - [ ] **Step 3: Commit.**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow add docker-compose.yml
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit -m "chore: add docker-compose with six services and healthchecks"
@@ -1162,47 +1258,61 @@
 ## Task 15: Full-stack acceptance (bring the stack up and verify)
 
 **Files**
+
 - (No new files — this task verifies the whole slice against FOUNDATION's acceptance criteria.)
 
 - [ ] **Step 1: Build and start the entire stack in the background.**
+
   ```bash
   docker compose -f /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/docker-compose.yml up -d --build
   ```
+
   Expected: images build; containers `db`, `redis`, `mailpit`, `api`, `web`, `caddy` all start.
 
 - [ ] **Step 2: Wait until every service reports healthy.** Poll the compose status until no container is still `starting`.
+
   ```bash
   until ! docker compose -f /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/docker-compose.yml ps --format '{{.Health}}' | grep -q starting; do :; done
   docker compose -f /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/docker-compose.yml ps
   ```
+
   Expected: `db`, `redis`, `mailpit`, `api`, `web` all show `healthy`; `caddy` shows `running` (it has no healthcheck). If any service shows `unhealthy`, inspect logs (e.g. `docker compose ... logs api`) before proceeding.
 
 - [ ] **Step 3: Verify the API health endpoint through Caddy (HTTPS).** `-k` accepts the `tls internal` self-signed cert.
+
   ```bash
   curl -k -s https://localhost/api/health
   ```
+
   Expected: exactly `{"status":"ok"}`.
 
 - [ ] **Step 4: Verify the web hello page is served through Caddy.**
+
   ```bash
   curl -k -s https://localhost/ | grep -o '<div id="root"></div>'
   ```
+
   Expected: prints `<div id="root"></div>` — confirming Vite's `index.html` is being proxied (React then mounts the HelloPage client-side).
 
 - [ ] **Step 5: Confirm migrations were applied inside the running DB.**
+
   ```bash
   docker compose -f /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/docker-compose.yml exec -T db \
     psql -U app -d app -c "\dt"
   ```
+
   Expected: the table list includes `User`, `VerificationToken`, `AuditLog`, and `_prisma_migrations` (created by `prisma migrate deploy` in the api entrypoint).
 
 - [ ] **Step 6: Tear the stack down (keep this clean for the next plan).**
+
   ```bash
   docker compose -f /Users/thammasornlueadtaharn/Desktop/project/authentication-flow/docker-compose.yml down
   ```
+
   Expected: all six containers stop and are removed; named volumes persist.
 
 - [ ] **Step 7: Final commit (acceptance verified — no code change, record the milestone).**
+
   ```bash
   git -C /Users/thammasornlueadtaharn/Desktop/project/authentication-flow commit --allow-empty -m "chore: verify dev docker stack acceptance (health + hello page)"
   ```

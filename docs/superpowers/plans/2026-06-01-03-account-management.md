@@ -1,5 +1,3 @@
-I have enough context. The plan must respect the domain language (Session, Sign in/out, Change password vs Reset password, Verification token). Now I'll write the implementation plan.
-
 # Account Management — Change Password / Change Email / Sign Out Everywhere Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
@@ -15,6 +13,7 @@ I have enough context. The plan must respect the domain language (Session, Sign 
 ## Files Overview
 
 API (all paths under `/Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/api/`):
+
 - `src/modules/account/account.schema.ts` — Zod bodies + inferred types (NEW; this slice owns it)
 - `src/modules/account/account.service.ts` — change-password / change-email / confirm-email-change logic (NEW)
 - `src/modules/account/account.routes.ts` — `/account` router (NEW)
@@ -24,6 +23,7 @@ API (all paths under `/Users/thammasornlueadtaharn/Desktop/project/authenticatio
 - `tests/auth/logout-all.int.test.ts` — logout-all integration test (NEW)
 
 Web (all paths under `/Users/thammasornlueadtaharn/Desktop/project/authentication-flow/apps/web/`):
+
 - `src/features/account/useChangePassword.ts` (NEW)
 - `src/features/account/useChangeEmail.ts` (NEW)
 - `src/features/account/useLogoutAll.ts` (NEW)
@@ -40,6 +40,7 @@ Assumptions (delivered by earlier plans; do NOT recreate): the full Prisma schem
 This slice reuses helpers built in Plans 00–02. Read their real exports first so later tasks call them with the exact names and argument shapes — do not assume.
 
 **Files**
+
 - Read only: `apps/api/src/lib/tokens.ts`, `apps/api/src/lib/sessionStore.ts`, `apps/api/src/lib/audit.ts`, `apps/api/src/lib/mailer.ts`, `apps/api/src/lib/password.ts`, `apps/api/src/middleware/requireAuth.ts`, `apps/api/src/db/prisma.ts`, `apps/api/src/config/env.ts`, `apps/api/src/app.ts`, `apps/api/tests/` helpers (e.g. a Mailpit helper + truncate helper)
 
 - [ ] **Step 1: Print the public surface of every helper this slice calls.**
@@ -84,6 +85,7 @@ This slice reuses helpers built in Plans 00–02. Read their real exports first 
 Zod schemas are the single source of truth for both validation and TS types.
 
 **Files**
+
 - Create: `apps/api/src/modules/account/account.schema.ts`
 
 - [ ] **Step 1: Write the schemas.** Note `z.email()` (top-level — NOT the deprecated `z.string().email()`), and `error` for custom messages (NOT `message`).
@@ -133,6 +135,7 @@ Zod schemas are the single source of truth for both validation and TS types.
 The service holds the business logic; routes stay thin. Start with the change-password path. The test is written first against the HTTP layer in Task 5, but the service has a focused unit-style behavior we lock in here via the service signature + a compile gate, then prove end-to-end in Task 5.
 
 **Files**
+
 - Create: `apps/api/src/modules/account/account.service.ts`
 
 - [ ] **Step 1: Create the service file with the change-password function only.** It loads the User, verifies the current Credential with `verifyPassword`, throws a typed error on mismatch (the central `errorHandler` maps it to 400), writes the new hash, and audits. Use the exact helper names confirmed in Task 1.
@@ -209,6 +212,7 @@ The service holds the business logic; routes stay thin. Start with the change-pa
 Two-step email change. Step one verifies the current Credential, guards against a duplicate email, mints an `EMAIL_CHANGE` Verification token carrying `newEmail`, and mails the **new** address. Step two consumes the token and applies the email.
 
 **Files**
+
 - Modify: `apps/api/src/modules/account/account.service.ts`
 
 - [ ] **Step 1: Add `requestEmailChange`.** It throws `InvalidCurrentPasswordError` on a bad current password. If the new email is already taken it returns silently with no email and no token (anti-enumeration: never reveal another User exists). Otherwise it creates the token via `createToken({ userId, type: 'EMAIL_CHANGE', newEmail })` and mails the **new** address a confirmation link built from `env.APP_URL`.
@@ -305,6 +309,7 @@ Two-step email change. Step one verifies the current Credential, guards against 
 Write the failing integration test first, then the router, then mount it, then go green.
 
 **Files**
+
 - Create: `apps/api/tests/account/account.int.test.ts`
 - Create: `apps/api/src/modules/account/account.routes.ts`
 - Modify: `apps/api/src/app.ts`
@@ -541,6 +546,7 @@ Write the failing integration test first, then the router, then mount it, then g
 Reuse the Plan-01 `sessionStore` helper to destroy every Session for the User, then destroy the caller's current Session and clear the cookie.
 
 **Files**
+
 - Create: `apps/api/tests/auth/logout-all.int.test.ts`
 - Modify: `apps/api/src/modules/auth/auth.routes.ts`
 
@@ -666,6 +672,7 @@ Reuse the Plan-01 `sessionStore` helper to destroy every Session for the User, t
 TanStack Query v5 mutations calling the new endpoints through the shared `apiClient` (which already sets `credentials:'include'` and attaches `x-csrf-token` on mutations).
 
 **Files**
+
 - Create: `apps/web/src/features/account/useChangePassword.ts`
 - Create: `apps/web/src/features/account/useChangeEmail.ts`
 - Create: `apps/web/src/features/account/useLogoutAll.ts`
@@ -759,6 +766,7 @@ TanStack Query v5 mutations calling the new endpoints through the shared `apiCli
 One page with a change-password form, a change-email form (both RHF + Zod), and a "Sign out everywhere" button. Per the domain language: the UI verb for ending Sessions is "Sign out"; the in-Session password update is "Change password" (distinct from "Reset password").
 
 **Files**
+
 - Create: `apps/web/tests/account/AccountSettingsPage.test.tsx`
 - Create: `apps/web/src/features/account/AccountSettingsPage.tsx`
 - Modify: `apps/web/src/routes/router.tsx`
@@ -1042,6 +1050,7 @@ One page with a change-password form, a change-email form (both RHF + Zod), and 
 Run both suites and a manual smoke test through Docker to prove the three acceptance criteria end-to-end.
 
 **Files**
+
 - None (verification only)
 
 - [ ] **Step 1: Run the complete API and web test suites.**

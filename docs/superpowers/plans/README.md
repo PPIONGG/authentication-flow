@@ -9,7 +9,7 @@
 ## ลำดับการ build
 
 | # | แผน | สร้างอะไร | รันได้แค่ไหน | ต้องมีก่อน |
-|---|-----|----------|-------------|-----------|
+| --- | --- | --- | --- | --- |
 | 00 | [scaffold & docker](./2026-06-01-00-scaffold-and-docker.md) | monorepo + 6 docker services + Prisma schema เต็ม + reverse proxy | `docker compose up` ขึ้นครบ, `https://localhost/api/health` ตอบ ok | — |
 | 01 | [core auth (sessions)](./2026-06-01-01-core-auth-sessions.md) | register/login/logout/me + Redis session + CSRF + rate-limit + หน้า React | ล็อกอินจริง end-to-end ผ่านเบราว์เซอร์ | 00 |
 | 02 | [email verification & reset](./2026-06-01-02-email-verification-and-reset.md) | mailer (Mailpit) + token + ยืนยันอีเมล + ลืม/รีเซ็ตรหัส + gate login | ยืนยันอีเมล/รีเซ็ตรหัส (ดูเมลใน Mailpit) | 01 |

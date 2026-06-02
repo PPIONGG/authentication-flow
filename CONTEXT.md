@@ -27,6 +27,7 @@ _Avoid_: Log in / log out, authenticate (as a UI word)
 
 **Reset password** vs **Change password**:
 Two distinct flows that are easy to confuse.
+
 - _Reset password_ — recovering access while signed **out** (the User forgot it), proven by a
   single-use token sent to their email.
 - _Change password_ — updating the password while signed **in**, proven by entering the current

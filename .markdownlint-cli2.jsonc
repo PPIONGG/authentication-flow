@@ -1,0 +1,26 @@
+{
+  // Markdown lint policy for this repo. See docs/adr/0004-markdown-lint-policy.md
+  // for the full rationale. The VS Code "markdownlint" extension reads this file
+  // automatically, so editor squiggles and `npm run lint:md` stay in agreement.
+  "config": {
+    "default": true,
+
+    // MD013 line-length: OFF. Docs are bilingual (Thai has no word boundaries to
+    // wrap on) long-form prose meant to be read with soft-wrap, plus they embed
+    // long code samples. A hard column cap would mean perpetual reflow churn.
+    "MD013": false,
+
+    // MD036 no-emphasis-as-heading: OFF. The writing-plans format uses bold
+    // one-line labels (**Files**, **Step 1: ...**) as structure inside task
+    // lists; promoting them to real headings would bloat the TOC and break the
+    // format. (CONTEXT.md's glossary does not trip this rule.)
+    "MD036": false,
+
+    // MD010 no-hard-tabs: allowed INSIDE code blocks only, so code samples
+    // (Caddyfile today; a Makefile/Go sample tomorrow) keep their literal tabs.
+    // Stray tabs in prose are still flagged.
+    "MD010": { "code_blocks": false }
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["**/node_modules/**", "**/dist/**"]
+}

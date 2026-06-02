@@ -1,5 +1,3 @@
-I'll write the implementation plan for the "Email Verification & Password Reset" slice. This is a documentation/planning task, so let me produce the plan directly in the required format.
-
 # Email Verification & Password Reset Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
@@ -13,6 +11,7 @@ I'll write the implementation plan for the "Email Verification & Password Reset"
 ## Files Overview
 
 **API (`/apps/api`)**
+
 - Create `src/lib/mailer.ts` — nodemailer transport to Mailpit + `sendVerificationEmail` / `sendPasswordResetEmail`.
 - Create `src/lib/tokens.ts` — `createToken`, `consumeToken` (sha256 hash, expiry, single-use, timing-safe).
 - Modify `src/modules/auth/auth.schema.ts` — add `VerifyEmailBody`, `ResendVerificationBody`, `ForgotPasswordBody`, `ResetPasswordBody`.
@@ -22,6 +21,7 @@ I'll write the implementation plan for the "Email Verification & Password Reset"
 - Create `tests/helpers/mailpit.ts` — Mailpit HTTP API helpers.
 
 **WEB (`/apps/web`)**
+
 - Create `src/features/auth/useVerifyEmail.ts`, `useResendVerification.ts`, `useForgotPassword.ts`, `useResetPassword.ts`.
 - Create `src/features/auth/VerifyEmailPage.tsx`, `ForgotPasswordPage.tsx`, `ResetPasswordPage.tsx`.
 - Modify `src/features/auth/RegisterPage.tsx` — show "check your email" after success.
@@ -36,6 +36,7 @@ I'll write the implementation plan for the "Email Verification & Password Reset"
 Tokens are random 32-byte hex strings handed to the user; only their sha256 hash is persisted in `VerificationToken.tokenHash`. Verification re-hashes the presented token, looks up the row, and uses `crypto.timingSafeEqual` plus expiry + `consumedAt` checks before marking it consumed.
 
 **Files**
+
 - Create: `/apps/api/src/lib/tokens.ts`
 - Test: `/apps/api/tests/lib/tokens.int.test.ts`
 
@@ -43,6 +44,7 @@ Steps:
 
 - [ ] **Step 1: Write the failing test for `createToken` + `consumeToken` happy path.**
   Create `/apps/api/tests/lib/tokens.int.test.ts`:
+
   ```ts
   import { beforeEach, describe, expect, it } from 'vitest';
   import { prisma } from '../../src/db/prisma.js';
@@ -88,13 +90,16 @@ Steps:
   ```
 
 - [ ] **Step 2: Run the test and confirm it FAILS (module does not exist).**
+
   ```bash
   cd /apps/api && npx vitest run tests/lib/tokens.int.test.ts
   ```
+
   Expected: FAIL — `Failed to load .../src/lib/tokens.ts` / `Cannot find module './tokens.js'`.
 
 - [ ] **Step 3: Implement `lib/tokens.ts`.**
   Create `/apps/api/src/lib/tokens.ts`:
+
   ```ts
   import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
   import { prisma } from '../db/prisma.js';
@@ -169,13 +174,16 @@ Steps:
   ```
 
 - [ ] **Step 4: Run the test and confirm it PASSES.**
+
   ```bash
   cd /apps/api && npx vitest run tests/lib/tokens.int.test.ts
   ```
+
   Expected: PASS — `2 passed`.
 
 - [ ] **Step 5: Add failing tests for single-use and expiry edge cases.**
   Append to `/apps/api/tests/lib/tokens.int.test.ts` inside the `describe`:
+
   ```ts
     it('consumeToken is single-use (second consume returns null)', async () => {
       const user = await makeUser();
@@ -204,12 +212,15 @@ Steps:
   ```
 
 - [ ] **Step 6: Run the test and confirm all PASS.**
+
   ```bash
   cd /apps/api && npx vitest run tests/lib/tokens.int.test.ts
   ```
+
   Expected: PASS — `6 passed`. (Implementation already covers these branches; no code change needed.)
 
 - [ ] **Step 7: Commit.**
+
   ```bash
   cd /apps/api && git add src/lib/tokens.ts tests/lib/tokens.int.test.ts && git commit -m "feat(api): add single-use hashed verification tokens"
   ```
@@ -221,6 +232,7 @@ Steps:
 A nodemailer transport pointed at Mailpit (no auth, plaintext on port 1025) plus two typed helpers that build the verification and reset URLs from `APP_URL`.
 
 **Files**
+
 - Create: `/apps/api/src/lib/mailer.ts`
 - Test: `/apps/api/tests/helpers/mailpit.ts` (shared test helper), `/apps/api/tests/lib/mailer.int.test.ts`
 
@@ -228,6 +240,7 @@ Steps:
 
 - [ ] **Step 1: Create the Mailpit test helper.**
   Create `/apps/api/tests/helpers/mailpit.ts`:
+
   ```ts
   const MAILPIT = process.env.MAILPIT_URL ?? 'http://mailpit:8025';
 
@@ -268,6 +281,7 @@ Steps:
 
 - [ ] **Step 2: Write the failing test for the mailer.**
   Create `/apps/api/tests/lib/mailer.int.test.ts`:
+
   ```ts
   import { beforeEach, describe, expect, it } from 'vitest';
   import { sendVerificationEmail, sendPasswordResetEmail } from '../../src/lib/mailer.js';
@@ -299,13 +313,16 @@ Steps:
   ```
 
 - [ ] **Step 3: Run the test and confirm it FAILS (module does not exist).**
+
   ```bash
   cd /apps/api && npx vitest run tests/lib/mailer.int.test.ts
   ```
+
   Expected: FAIL — `Failed to load .../src/lib/mailer.ts`.
 
 - [ ] **Step 4: Implement `lib/mailer.ts`.**
   Create `/apps/api/src/lib/mailer.ts`:
+
   ```ts
   import nodemailer from 'nodemailer';
   import { env } from '../config/env.js';
@@ -353,12 +370,15 @@ Steps:
   ```
 
 - [ ] **Step 5: Run the test and confirm it PASSES.**
+
   ```bash
   cd /apps/api && npx vitest run tests/lib/mailer.int.test.ts
   ```
+
   Expected: PASS — `2 passed`. (Requires the Mailpit container running; under `docker compose`, run via `docker compose exec api npx vitest run tests/lib/mailer.int.test.ts`.)
 
 - [ ] **Step 6: Commit.**
+
   ```bash
   cd /apps/api && git add src/lib/mailer.ts tests/helpers/mailpit.ts tests/lib/mailer.int.test.ts && git commit -m "feat(api): add nodemailer Mailpit mailer with verify/reset emails"
   ```
@@ -370,18 +390,22 @@ Steps:
 Add Zod 4 schemas for the four new bodies. These are the single source of truth for validation and inferred types.
 
 **Files**
+
 - Modify: `/apps/api/src/modules/auth/auth.schema.ts`
 
 Steps:
 
 - [ ] **Step 1: Read the existing schema file to find the insertion point.**
+
   ```bash
   cd /apps/api && cat src/modules/auth/auth.schema.ts
   ```
+
   Expected: existing `RegisterBody` and `LoginBody` `z.object` definitions (created in Plan 01). Note that `z` is already imported.
 
 - [ ] **Step 2: Append the four new schemas.**
   Add to the end of `/apps/api/src/modules/auth/auth.schema.ts`:
+
   ```ts
   export const VerifyEmailBody = z.object({
     token: z.string().regex(/^[0-9a-f]{64}$/, { error: 'Invalid token' }),
@@ -406,12 +430,15 @@ Steps:
   ```
 
 - [ ] **Step 3: Type-check to confirm the schemas compile.**
+
   ```bash
   cd /apps/api && npx tsc --noEmit
   ```
+
   Expected: no errors (exit code 0).
 
 - [ ] **Step 4: Commit.**
+
   ```bash
   cd /apps/api && git add src/modules/auth/auth.schema.ts && git commit -m "feat(api): add zod schemas for verify/resend/forgot/reset"
   ```
@@ -423,19 +450,23 @@ Steps:
 Plan 01's `register` created an ACTIVE user (`emailVerifiedAt = now()`) and sent no email. This task flips it: `emailVerifiedAt` stays `null` and an `EMAIL_VERIFY` token is mailed. Endpoint contract is unchanged (`201 {ok:true}`).
 
 **Files**
+
 - Modify: `/apps/api/src/modules/auth/auth.service.ts`
 - Test: `/apps/api/tests/auth/verify-email.int.test.ts` (register half here; verify half in Task 5)
 
 Steps:
 
 - [ ] **Step 1: Read the existing `createUser` implementation.**
+
   ```bash
   cd /apps/api && cat src/modules/auth/auth.service.ts
   ```
+
   Expected (Plan 01 real code): a `createUser(email, password)` function that throws `HttpError(409, 'registration_failed')` on a duplicate, calls `hashPassword`, and ends with `return prisma.user.create({ data: { email, passwordHash, emailVerifiedAt: new Date() } });`. The register ROUTE (Plan 01) calls `createUser(...)` then `writeAudit({ userId, event: 'register', ... })`; that route stays unchanged. Note the exact import block.
 
 - [ ] **Step 2: Write the failing test asserting register leaves user unverified and sends mail.**
   Create `/apps/api/tests/auth/verify-email.int.test.ts`:
+
   ```ts
   import { beforeEach, afterAll, describe, expect, it } from 'vitest';
   import { app } from '../../src/app.js';
@@ -477,13 +508,16 @@ Steps:
   ```
 
 - [ ] **Step 3: Run the test and confirm it FAILS.**
+
   ```bash
   cd /apps/api && npx vitest run tests/auth/verify-email.int.test.ts
   ```
+
   Expected: FAIL — `expected null` assertion fails because `emailVerifiedAt` is currently set, and `latestMessageTo` returns null (no mail sent).
 
 - [ ] **Step 4: Update the imports in `auth.service.ts`.**
   Add these imports near the top of `/apps/api/src/modules/auth/auth.service.ts` (alongside the existing imports):
+
   ```ts
   import { createToken, consumeToken } from '../../lib/tokens.js';
   import { sendVerificationEmail, sendPasswordResetEmail } from '../../lib/mailer.js';
@@ -491,6 +525,7 @@ Steps:
 
 - [ ] **Step 5: Change `createUser` to leave the user unverified and send mail.**
   In `/apps/api/src/modules/auth/auth.service.ts`, replace the `return prisma.user.create({ ... })` at the end of `createUser`. Old code (from Plan 01):
+
   ```ts
     return prisma.user.create({
       data: {
@@ -500,7 +535,9 @@ Steps:
       },
     });
   ```
+
   New code:
+
   ```ts
     const user = await prisma.user.create({
       data: {
@@ -513,15 +550,19 @@ Steps:
     await sendVerificationEmail(user.email, token);
     return user;
   ```
+
   (The register ROUTE's `writeAudit({ userId: user.id, event: 'register', ... })` call stays exactly as Plan 01 wrote it.)
 
 - [ ] **Step 6: Run the test and confirm it PASSES.**
+
   ```bash
   cd /apps/api && npx vitest run tests/auth/verify-email.int.test.ts
   ```
+
   Expected: PASS — `1 passed`.
 
 - [ ] **Step 7: Commit.**
+
   ```bash
   cd /apps/api && git add src/modules/auth/auth.service.ts tests/auth/verify-email.int.test.ts && git commit -m "feat(api): register leaves email unverified and sends verify mail"
   ```
@@ -533,6 +574,7 @@ Steps:
 `verify-email` consumes an `EMAIL_VERIFY` token and sets `emailVerifiedAt`. `resend-verification` always returns 200 (anti-enumeration) and mails a fresh token only when the user exists and is still unverified.
 
 **Files**
+
 - Modify: `/apps/api/src/modules/auth/auth.service.ts`
 - Modify: `/apps/api/src/modules/auth/auth.routes.ts`
 - Test: `/apps/api/tests/auth/verify-email.int.test.ts`
@@ -541,6 +583,7 @@ Steps:
 
 - [ ] **Step 1: Add failing tests for verify + resend.**
   Append to the `describe('register -> email verification', ...)` block in `/apps/api/tests/auth/verify-email.int.test.ts`:
+
   ```ts
     it('verify-email consumes the token and marks the user verified', async () => {
       const email = 'verifyme@example.com';
@@ -637,13 +680,16 @@ Steps:
   ```
 
 - [ ] **Step 2: Run the tests and confirm the new ones FAIL.**
+
   ```bash
   cd /apps/api && npx vitest run tests/auth/verify-email.int.test.ts
   ```
+
   Expected: FAIL — `verify-email` returns 404 (route not mounted), so the `.expect(200)` calls fail.
 
 - [ ] **Step 3: Add `verifyEmail` and `resendVerification` service functions.**
   Append to `/apps/api/src/modules/auth/auth.service.ts`:
+
   ```ts
   export async function verifyEmail(token: string): Promise<boolean> {
     const row = await consumeToken({ token, type: 'EMAIL_VERIFY' });
@@ -665,21 +711,28 @@ Steps:
   ```
 
 - [ ] **Step 4: Read the routes file to match the existing handler style.**
+
   ```bash
   cd /apps/api && cat src/modules/auth/auth.routes.ts
   ```
+
   Expected: a `Router()` with existing `register`/`login` handlers using `safeParse` + `z.flattenError`, and the imported service functions. Note the import line for `auth.service.js` and `auth.schema.js`.
 
 - [ ] **Step 5: Mount the two routes.**
   In `/apps/api/src/modules/auth/auth.routes.ts`, extend the service/schema imports and add the handlers. Add to the schema import:
+
   ```ts
   import { VerifyEmailBody, ResendVerificationBody } from './auth.schema.js';
   ```
+
   Add to the service import:
+
   ```ts
   import { verifyEmail, resendVerification } from './auth.service.js';
   ```
+
   Add these handlers before `export default router;` (or `export { router }`, matching the file):
+
   ```ts
   router.post('/verify-email', async (req, res) => {
     const parsed = VerifyEmailBody.safeParse(req.body);
@@ -700,15 +753,19 @@ Steps:
     return res.status(200).json({ ok: true }); // always 200
   });
   ```
+
   (Ensure `import { z } from 'zod';` is present at the top of the routes file; add it if not.)
 
 - [ ] **Step 6: Run the tests and confirm all PASS.**
+
   ```bash
   cd /apps/api && npx vitest run tests/auth/verify-email.int.test.ts
   ```
+
   Expected: PASS — `6 passed`.
 
 - [ ] **Step 7: Commit.**
+
   ```bash
   cd /apps/api && git add src/modules/auth/auth.service.ts src/modules/auth/auth.routes.ts tests/auth/verify-email.int.test.ts && git commit -m "feat(api): add verify-email and resend-verification endpoints"
   ```
@@ -720,6 +777,7 @@ Steps:
 Plan 01's `login` did not check verification. Now an unverified (but otherwise valid) user must be blocked with a clear, distinguishable error so the SPA can show a resend hint. Bad-credentials errors stay generic (anti-enumeration); the verification error is only returned AFTER the password is confirmed correct, so it never leaks whether an email exists.
 
 **Files**
+
 - Modify: `/apps/api/src/modules/auth/auth.service.ts`
 - Modify: `/apps/api/src/modules/auth/auth.routes.ts`
 - Test: `/apps/api/tests/auth/login-verification.int.test.ts`
@@ -728,6 +786,7 @@ Steps:
 
 - [ ] **Step 1: Write the failing test.**
   Create `/apps/api/tests/auth/login-verification.int.test.ts`:
+
   ```ts
   import { beforeEach, afterAll, describe, expect, it } from 'vitest';
   import { app } from '../../src/app.js';
@@ -802,9 +861,11 @@ Steps:
   ```
 
 - [ ] **Step 2: Run the test and confirm it FAILS.**
+
   ```bash
   cd /apps/api && npx vitest run tests/auth/login-verification.int.test.ts
   ```
+
   Expected: FAIL — the unverified-login test gets 200 instead of 403 (login currently ignores verification).
 
 - [ ] **Step 3: No service change — the verification gate lives in the login ROUTE.**
@@ -812,6 +873,7 @@ Steps:
 
 - [ ] **Step 4: Add the verification gate to the login route, after `verifyCredentials` succeeds.**
   In `/apps/api/src/modules/auth/auth.routes.ts`, the Plan 01 login handler calls `verifyCredentials` inside a try/catch and, on success, calls `req.session.regenerate(...)`. Insert the gate between the successful `verifyCredentials` call and `req.session.regenerate`, so an unverified user gets a 403 and NO session is created. Old (Plan 01):
+
   ```ts
     let user;
     try {
@@ -828,7 +890,9 @@ Steps:
     // Anti-fixation: regenerate the session id before storing identity.
     req.session.regenerate((regenErr) => {
   ```
+
   New:
+
   ```ts
     let user;
     try {
@@ -850,21 +914,27 @@ Steps:
     // Anti-fixation: regenerate the session id before storing identity.
     req.session.regenerate((regenErr) => {
   ```
+
   (This runs only AFTER the password is confirmed, so it never leaks whether an email exists; bad-credentials still return the generic 401 from `verifyCredentials`.)
 
 - [ ] **Step 5: Run the test and confirm all PASS.**
+
   ```bash
   cd /apps/api && npx vitest run tests/auth/login-verification.int.test.ts
   ```
+
   Expected: PASS — `3 passed`.
 
 - [ ] **Step 6: Run the full auth suite to confirm no Plan-01 login tests regressed.**
+
   ```bash
   cd /apps/api && npx vitest run tests/auth
   ```
+
   Expected: PASS — all auth tests green. If a Plan-01 login test seeded a user with `emailVerifiedAt: new Date()`, it still passes; any that registered then logged in without verifying must now verify first (those are this plan's concern only if they exist — leave Plan-01 tests untouched unless they fail, in which case they were relying on the old behavior and the failure is expected and documented in Task 8).
 
 - [ ] **Step 7: Commit.**
+
   ```bash
   cd /apps/api && git add src/modules/auth/auth.service.ts src/modules/auth/auth.routes.ts tests/auth/login-verification.int.test.ts && git commit -m "feat(api): require verified email to log in"
   ```
@@ -876,6 +946,7 @@ Steps:
 `forgot-password` always returns 200 and mails a short-lived (1 hour) `PASSWORD_RESET` token only when the user exists. `reset-password` consumes the token, sets a new argon2 hash, destroys ALL of the user's sessions via the Plan-01 `sessionStore` helper, and audits.
 
 **Files**
+
 - Modify: `/apps/api/src/modules/auth/auth.service.ts`
 - Modify: `/apps/api/src/modules/auth/auth.routes.ts`
 - Test: `/apps/api/tests/auth/password-reset.int.test.ts`
@@ -883,13 +954,16 @@ Steps:
 Steps:
 
 - [ ] **Step 1: Confirm the Plan-01 `sessionStore` helper signature.**
+
   ```bash
   cd /apps/api && cat src/lib/sessionStore.ts
   ```
+
   Expected: a per-user session-set helper exporting (per Plan 01) `addUserSession(userId, sessionId)`, `removeUserSession(userId, sessionId)`, and `destroyAllUserSessions(userId)` which deletes every Redis session for the user and clears the `user_sessions:<userId>` set. Use that exact name `destroyAllUserSessions` below.
 
 - [ ] **Step 2: Write the failing test.**
   Create `/apps/api/tests/auth/password-reset.int.test.ts`:
+
   ```ts
   import { beforeEach, afterAll, describe, expect, it } from 'vitest';
   import { app } from '../../src/app.js';
@@ -1021,17 +1095,22 @@ Steps:
   ```
 
 - [ ] **Step 3: Run the test and confirm it FAILS.**
+
   ```bash
   cd /apps/api && npx vitest run tests/auth/password-reset.int.test.ts
   ```
+
   Expected: FAIL — `forgot-password`/`reset-password` return 404 (routes not mounted).
 
 - [ ] **Step 4: Add the service functions.**
   Ensure the sessionStore import is present at the top of `/apps/api/src/modules/auth/auth.service.ts`:
+
   ```ts
   import { destroyAllUserSessions } from '../../lib/sessionStore.js';
   ```
+
   (Use the exact name confirmed in Step 1.) Then append:
+
   ```ts
   const RESET_TTL_MS = 1000 * 60 * 60; // 1 hour
 
@@ -1060,18 +1139,24 @@ Steps:
     return row.userId;
   }
   ```
+
   (`argon2` is already imported in this file from Plan 01; `createToken`/`consumeToken` and `sendPasswordResetEmail` were imported in Tasks 1, 2, 4.)
 
 - [ ] **Step 5: Mount the routes with audit.**
   In `/apps/api/src/modules/auth/auth.routes.ts` add to the schema import:
+
   ```ts
   import { ForgotPasswordBody, ResetPasswordBody } from './auth.schema.js';
   ```
+
   Add to the service import:
+
   ```ts
   import { forgotPassword, resetPassword } from './auth.service.js';
   ```
+
   Add the handlers (using the Plan-01 `writeAudit` already imported in this file):
+
   ```ts
   router.post('/forgot-password', async (req, res) => {
     const parsed = ForgotPasswordBody.safeParse(req.body);
@@ -1100,12 +1185,15 @@ Steps:
   ```
 
 - [ ] **Step 6: Run the test and confirm all PASS.**
+
   ```bash
   cd /apps/api && npx vitest run tests/auth/password-reset.int.test.ts
   ```
+
   Expected: PASS — `3 passed`.
 
 - [ ] **Step 7: Commit.**
+
   ```bash
   cd /apps/api && git add src/modules/auth/auth.service.ts src/modules/auth/auth.routes.ts tests/auth/password-reset.int.test.ts && git commit -m "feat(api): add forgot-password and reset-password endpoints"
   ```
@@ -1117,27 +1205,34 @@ Steps:
 Run everything together to catch cross-task regressions and ensure the build is clean before moving to the frontend.
 
 **Files**
+
 - (no source changes unless a regression surfaces)
 
 Steps:
 
 - [ ] **Step 1: Type-check the whole API.**
+
   ```bash
   cd /apps/api && npx tsc --noEmit
   ```
+
   Expected: exit code 0, no errors.
 
 - [ ] **Step 2: Run the entire API test suite.**
+
   ```bash
   cd /apps/api && npx vitest run
   ```
+
   Expected: PASS — all suites green (tokens, mailer, verify-email, login-verification, password-reset, plus Plan 00/01 tests).
 
 - [ ] **Step 3: If any Plan-01 login test fails because it registered then logged in without verifying, fix that test to verify first.**
   Such a test must register, read the token from Mailpit, call `/api/auth/verify-email`, then log in — mirroring `registerVerifiedAndLogin` in Task 7. Apply the minimal edit, re-run `npx vitest run`, confirm green. Commit:
+
   ```bash
   cd /apps/api && git add tests/auth && git commit -m "test(api): verify email before login in pre-existing login tests"
   ```
+
   (Skip this commit if no Plan-01 test regressed.)
 
 ---
@@ -1147,6 +1242,7 @@ Steps:
 The SPA register flow now shows "check your email"; a `/verify-email` page reads `?token=` and POSTs it. All mutations go through `apiClient` (credentials:"include", x-csrf-token on POST).
 
 **Files**
+
 - Create: `/apps/web/src/features/auth/useVerifyEmail.ts`, `/apps/web/src/features/auth/useResendVerification.ts`
 - Create: `/apps/web/src/features/auth/VerifyEmailPage.tsx`
 - Modify: `/apps/web/src/features/auth/RegisterPage.tsx`
@@ -1156,13 +1252,16 @@ The SPA register flow now shows "check your email"; a `/verify-email` page reads
 Steps:
 
 - [ ] **Step 1: Inspect `apiClient` to use the exact request signature.**
+
   ```bash
   cd /apps/web && cat src/lib/apiClient.ts
   ```
+
   Expected: a fetch wrapper (e.g. `apiClient.post(path, body)`) that sets `credentials:"include"` and attaches `x-csrf-token` from the csrf cookie on mutations. Use its exact exported shape below (referred to as `apiClient.post`).
 
 - [ ] **Step 2: Write the failing test for VerifyEmailPage.**
   Create `/apps/web/tests/auth/verifyEmail.test.tsx`:
+
   ```tsx
   import { describe, expect, it, beforeAll, afterEach, afterAll } from 'vitest';
   import { render, screen, waitFor } from '@testing-library/react';
@@ -1211,13 +1310,16 @@ Steps:
   ```
 
 - [ ] **Step 3: Run the test and confirm it FAILS.**
+
   ```bash
   cd /apps/web && npx vitest run tests/auth/verifyEmail.test.tsx
   ```
+
   Expected: FAIL — `Cannot find module '../../src/features/auth/VerifyEmailPage'`.
 
 - [ ] **Step 4: Implement the verify + resend hooks.**
   Create `/apps/web/src/features/auth/useVerifyEmail.ts`:
+
   ```ts
   import { useMutation } from '@tanstack/react-query';
   import { apiClient } from '../../lib/apiClient';
@@ -1229,7 +1331,9 @@ Steps:
     });
   }
   ```
+
   Create `/apps/web/src/features/auth/useResendVerification.ts`:
+
   ```ts
   import { useMutation } from '@tanstack/react-query';
   import { apiClient } from '../../lib/apiClient';
@@ -1244,6 +1348,7 @@ Steps:
 
 - [ ] **Step 5: Implement `VerifyEmailPage`.**
   Create `/apps/web/src/features/auth/VerifyEmailPage.tsx`:
+
   ```tsx
   import { useEffect } from 'react';
   import { Link, useSearchParams } from 'react-router';
@@ -1283,17 +1388,22 @@ Steps:
   ```
 
 - [ ] **Step 6: Run the test and confirm it PASSES.**
+
   ```bash
   cd /apps/web && npx vitest run tests/auth/verifyEmail.test.tsx
   ```
+
   Expected: PASS — `2 passed`.
 
 - [ ] **Step 7: Update `RegisterPage` to show a "check your email" state on success.**
   In `/apps/web/src/features/auth/RegisterPage.tsx`, the register mutation's success branch must no longer assume the user is logged in. Add a success-state render. Read the file first:
+
   ```bash
   cd /apps/web && cat src/features/auth/RegisterPage.tsx
   ```
+
   Then add, after the existing `useRegister()` hook and before the form `return`, a guard:
+
   ```tsx
     if (register.isSuccess) {
       return (
@@ -1304,25 +1414,32 @@ Steps:
       );
     }
   ```
+
   (`register` is the existing `useRegister()` result variable; rename to match the file if different.)
 
 - [ ] **Step 8: Add the `/verify-email` route.**
   In `/apps/web/src/routes/router.tsx`, import and register the page. Add the import:
+
   ```tsx
   import { VerifyEmailPage } from '../features/auth/VerifyEmailPage';
   ```
+
   Add a public route entry (matching the file's `createBrowserRouter` array shape):
+
   ```tsx
     { path: '/verify-email', element: <VerifyEmailPage /> },
   ```
 
 - [ ] **Step 9: Run the web test suite for this slice.**
+
   ```bash
   cd /apps/web && npx vitest run tests/auth/verifyEmail.test.tsx
   ```
+
   Expected: PASS — `2 passed`.
 
 - [ ] **Step 10: Commit.**
+
   ```bash
   cd /apps/web && git add src/features/auth/useVerifyEmail.ts src/features/auth/useResendVerification.ts src/features/auth/VerifyEmailPage.tsx src/features/auth/RegisterPage.tsx src/routes/router.tsx tests/auth/verifyEmail.test.tsx && git commit -m "feat(web): verify-email page and check-your-email register UX"
   ```
@@ -1334,6 +1451,7 @@ Steps:
 A `/forgot-password` form (always shows a generic "if that email exists…" confirmation) and a `/reset-password` page that reads `?token=` and submits a new password.
 
 **Files**
+
 - Create: `/apps/web/src/features/auth/useForgotPassword.ts`, `/apps/web/src/features/auth/useResetPassword.ts`
 - Create: `/apps/web/src/features/auth/ForgotPasswordPage.tsx`, `/apps/web/src/features/auth/ResetPasswordPage.tsx`
 - Modify: `/apps/web/src/routes/router.tsx`
@@ -1343,6 +1461,7 @@ Steps:
 
 - [ ] **Step 1: Write the failing test.**
   Create `/apps/web/tests/auth/passwordReset.test.tsx`:
+
   ```tsx
   import { describe, expect, it, beforeAll, afterEach, afterAll } from 'vitest';
   import { render, screen, waitFor } from '@testing-library/react';
@@ -1413,13 +1532,16 @@ Steps:
   ```
 
 - [ ] **Step 2: Run the test and confirm it FAILS.**
+
   ```bash
   cd /apps/web && npx vitest run tests/auth/passwordReset.test.tsx
   ```
+
   Expected: FAIL — `Cannot find module '../../src/features/auth/ForgotPasswordPage'`.
 
 - [ ] **Step 3: Implement the hooks.**
   Create `/apps/web/src/features/auth/useForgotPassword.ts`:
+
   ```ts
   import { useMutation } from '@tanstack/react-query';
   import { apiClient } from '../../lib/apiClient';
@@ -1431,7 +1553,9 @@ Steps:
     });
   }
   ```
+
   Create `/apps/web/src/features/auth/useResetPassword.ts`:
+
   ```ts
   import { useMutation } from '@tanstack/react-query';
   import { apiClient } from '../../lib/apiClient';
@@ -1446,6 +1570,7 @@ Steps:
 
 - [ ] **Step 4: Implement `ForgotPasswordPage`.**
   Create `/apps/web/src/features/auth/ForgotPasswordPage.tsx`:
+
   ```tsx
   import { useForm } from 'react-hook-form';
   import { zodResolver } from '@hookform/resolvers/zod';
@@ -1480,6 +1605,7 @@ Steps:
 
 - [ ] **Step 5: Implement `ResetPasswordPage`.**
   Create `/apps/web/src/features/auth/ResetPasswordPage.tsx`:
+
   ```tsx
   import { useForm } from 'react-hook-form';
   import { zodResolver } from '@hookform/resolvers/zod';
@@ -1530,23 +1656,29 @@ Steps:
 
 - [ ] **Step 6: Add both routes.**
   In `/apps/web/src/routes/router.tsx` add imports:
+
   ```tsx
   import { ForgotPasswordPage } from '../features/auth/ForgotPasswordPage';
   import { ResetPasswordPage } from '../features/auth/ResetPasswordPage';
   ```
+
   Add the public route entries:
+
   ```tsx
     { path: '/forgot-password', element: <ForgotPasswordPage /> },
     { path: '/reset-password', element: <ResetPasswordPage /> },
   ```
 
 - [ ] **Step 7: Run the test and confirm it PASSES.**
+
   ```bash
   cd /apps/web && npx vitest run tests/auth/passwordReset.test.tsx
   ```
+
   Expected: PASS — `3 passed`.
 
 - [ ] **Step 8: Commit.**
+
   ```bash
   cd /apps/web && git add src/features/auth/useForgotPassword.ts src/features/auth/useResetPassword.ts src/features/auth/ForgotPasswordPage.tsx src/features/auth/ResetPasswordPage.tsx src/routes/router.tsx tests/auth/passwordReset.test.tsx && git commit -m "feat(web): forgot-password and reset-password pages"
   ```
@@ -1558,6 +1690,7 @@ Steps:
 When login returns `403 { error: 'EMAIL_NOT_VERIFIED' }`, the login page shows a message and a resend control wired to `useResendVerification`.
 
 **Files**
+
 - Modify: `/apps/web/src/features/auth/useLogin.ts`
 - Modify: `/apps/web/src/features/auth/LoginPage.tsx`
 - Test: `/apps/web/tests/auth/loginUnverified.test.tsx`
@@ -1566,6 +1699,7 @@ Steps:
 
 - [ ] **Step 1: Write the failing test.**
   Create `/apps/web/tests/auth/loginUnverified.test.tsx`:
+
   ```tsx
   import { describe, expect, it, beforeAll, afterEach, afterAll } from 'vitest';
   import { render, screen, waitFor } from '@testing-library/react';
@@ -1613,17 +1747,22 @@ Steps:
   ```
 
 - [ ] **Step 2: Run the test and confirm it FAILS.**
+
   ```bash
   cd /apps/web && npx vitest run tests/auth/loginUnverified.test.tsx
   ```
+
   Expected: FAIL — no "verify your email" text / no resend button rendered.
 
 - [ ] **Step 3: Make `useLogin` carry the server error code.**
   Read the existing hook:
+
   ```bash
   cd /apps/web && cat src/features/auth/useLogin.ts
   ```
+
   Its `mutationFn` currently throws a generic error on non-OK. Change it so the thrown error includes the response `code`. Replace the non-OK branch so it parses the body:
+
   ```ts
       mutationFn: async (creds: { email: string; password: string }) => {
         try {
@@ -1637,24 +1776,32 @@ Steps:
         }
       },
   ```
+
   (Adjust to the exact shape `apiClient` attaches to thrown errors, confirmed by reading `apiClient.ts` in Task 9 Step 1. If `apiClient` exposes the parsed body on `err.body`, the above matches; otherwise read the status/body off the error accordingly.)
 
 - [ ] **Step 4: Render the unverified branch in `LoginPage`.**
   Read the file:
+
   ```bash
   cd /apps/web && cat src/features/auth/LoginPage.tsx
   ```
+
   Import the resend hook and add state. Add the import:
+
   ```tsx
   import { useResendVerification } from './useResendVerification';
   ```
+
   Inside the component, after the existing `useLogin()` hook, add:
+
   ```tsx
     const resend = useResendVerification();
     const loginError = login.error as (Error & { code?: string }) | null;
     const unverified = loginError?.code === 'EMAIL_NOT_VERIFIED';
   ```
+
   Then, in the JSX where errors are shown, add (the `email` value comes from the form's current input via `getValues('email')` — RHF `getValues` is available from `useForm`; destructure it):
+
   ```tsx
     {unverified && (
       <div>
@@ -1669,15 +1816,19 @@ Steps:
       </div>
     )}
   ```
+
   Ensure `getValues` is destructured from `useForm(...)` in this component.
 
 - [ ] **Step 5: Run the test and confirm it PASSES.**
+
   ```bash
   cd /apps/web && npx vitest run tests/auth/loginUnverified.test.tsx
   ```
+
   Expected: PASS — `1 passed`.
 
 - [ ] **Step 6: Commit.**
+
   ```bash
   cd /apps/web && git add src/features/auth/useLogin.ts src/features/auth/LoginPage.tsx tests/auth/loginUnverified.test.tsx && git commit -m "feat(web): show email-not-verified state with resend on login"
   ```
@@ -1689,43 +1840,56 @@ Steps:
 Confirm the whole frontend builds and all slice tests pass, then run the end-to-end Docker stack once to eyeball the real flow against Mailpit.
 
 **Files**
+
 - (no source changes unless a regression surfaces)
 
 Steps:
 
 - [ ] **Step 1: Type-check the web app.**
+
   ```bash
   cd /apps/web && npx tsc --noEmit
   ```
+
   Expected: exit code 0.
 
 - [ ] **Step 2: Run the entire web test suite.**
+
   ```bash
   cd /apps/web && npx vitest run
   ```
+
   Expected: PASS — all web suites green (verifyEmail, passwordReset, loginUnverified, plus earlier-plan tests).
 
 - [ ] **Step 3: Bring up the full Docker stack.**
+
   ```bash
   docker compose up -d --build
   ```
+
   Expected: all 6 services healthy (`docker compose ps` shows `caddy`, `web`, `api`, `db`, `redis`, `mailpit` up; `api` ran `prisma migrate deploy` then started `tsx watch`).
 
 - [ ] **Step 4: Smoke the register -> verify -> login -> reset flow against the live API.**
+
   ```bash
   curl -k -X POST https://localhost/api/auth/register -H 'content-type: application/json' -d '{"email":"smoke@example.com","password":"correct horse battery"}'
   curl -s 'http://localhost:8025/api/v1/search?query=to%3Asmoke@example.com&limit=1'
   ```
+
   Expected: register returns `{"ok":true}` (201); the Mailpit search returns one message with subject "Verify your email". Open `https://localhost/verify-email?token=<token from the mail body>` in a browser (trust Caddy's local CA once via `caddy trust` if prompted), confirm "Email verified", then log in.
 
 - [ ] **Step 5: Tear down the stack.**
+
   ```bash
   docker compose down
   ```
+
   Expected: all services stopped and removed.
 
 - [ ] **Step 6: Final slice commit (if Step 3/4 required any fix).**
+
   ```bash
   cd /apps/api && git add -A && git commit -m "chore: finalize email verification and password reset slice"
   ```
+
   (Skip if nothing changed during smoke testing.)
